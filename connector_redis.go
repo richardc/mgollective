@@ -53,7 +53,7 @@ func (r *RedisConnector) Publish(msg map[string]interface{}) {
 	}
 	log.Printf("Marshalled body to %s", body)
 	var wrapper RedisMessageWrapper
-	wrapper.Body = string(body)
+	wrapper.Body = "---\n" + string(body)
 	headers := make(map[string]string, 0)
 	if reply_to != nil {
 		headers["reply-to"] = reply_to.(string)

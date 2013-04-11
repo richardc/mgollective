@@ -27,17 +27,19 @@ func Discover(connector Connector, config Config, timeout int) []map[string]stri
 	}
 
 	start := time.Now()
-	connector.Publish(discovery)
 	cb := make(chan Message)
 	go connector.Loop(cb)
+	connector.Publish(discovery)
+
 	nodes := make([]map[string]string, 0)
 	for {
 		select {
 		case message := <-cb:
 			log.Printf("got response %+v", message)
-			node := make(map[string]string, 0)
-			node["senderid"] = message.Senderid
-			node["ping"] = time.Since(start).String()
+			node := map[string]string{
+				"senderid": message.Senderid,
+				"ping":     time.Since(start).String(),
+			}
 			nodes = append(nodes, node)
 			log.Println(node)
 		case <-time.After(time.Duration(timeout) * time.Second):
@@ -68,7 +70,7 @@ func PingLoop() {
 	log.Printf("Discovered %d nodes in %d seconds", len(nodes), timeout)
 
 	for _, node := range nodes {
-		log.Printf("ping from", node)
+		log.Printf("ping from %+v", node)
 	}
 }
 

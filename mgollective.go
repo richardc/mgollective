@@ -5,8 +5,9 @@ import (
 )
 
 func Run() {
-	conf := getconfig()
-	connector := connectorRegistry["redis"](conf)
+	config := getconfig()
+	connector := connectorRegistry["redis"](config)
 	log.Println(connector)
 	connector.Connect()
+	connector.Subscribe(config)
 }

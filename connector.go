@@ -2,6 +2,7 @@ package mgollective
 
 type Connector interface {
 	Connect()
+	Subscribe(*Config)
 }
 
 var connectorRegistry = map[string]func(*Config) Connector{}

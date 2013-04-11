@@ -17,6 +17,10 @@ func getconfig() *Config {
 	return &Config{config: conf}
 }
 
+func (c *Config) collectives() []string {
+	return []string{"mcollective"}
+}
+
 func (c *Config) GetStringDefault(section, variable, def string) string {
 	value, err := c.config.GetString(section, variable)
 	if err != nil {

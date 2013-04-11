@@ -17,7 +17,18 @@ func getconfig() *Config {
 	return &Config{config: conf}
 }
 
-func (c *Config) GetString(section, variable string) string {
-	value, _ := c.config.GetString(section, variable)
+func (c *Config) GetStringDefault(section, variable, def string) string {
+	value, err := c.config.GetString(section, variable)
+	if err != nil {
+		return def
+	}
 	return value
+}
+
+func (c *Config) GetIntDefault(section, variable string, def int) int {
+	value, err := c.config.GetInt64(section, variable)
+	if err != nil {
+		return def
+	}
+	return int(value)
 }

@@ -33,6 +33,12 @@ func (r *RedisConnector) Subscribe() {
 
 func (r *RedisConnector) Publish(msg Message) {
 	log.Printf("Publishing %+v", msg)
+	body, err := goyaml.Marshal(&msg)
+	if err != nil {
+		log.Println("Failed to Marshal", err)
+		return
+	}
+	log.Println("Marshalled to", body)
 }
 
 func (r *RedisConnector) Loop(parsed chan Message) {

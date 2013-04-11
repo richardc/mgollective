@@ -2,6 +2,7 @@ package mgollective
 
 import (
 	"log"
+	"time"
 )
 
 type DiscoveryAgent struct {
@@ -21,6 +22,10 @@ func (a *DiscoveryAgent) Respond(msg Message, connector Connector) {
 	reply := make(map[string]interface{})
 
 	reply["target"] = msg.reply_to
+	reply[":requestid"] = msg.Requestid
+	reply[":senderagent"] = "discovery"
+	reply[":senderid"] = a.config.senderid()
+	reply[":msgtime"] = time.Now().Unix()
 	if msg.Body == "ping" {
 		reply["body"] = "pong"
 	} else {

@@ -30,14 +30,13 @@ func (r *RedisConnector) Subscribe(config *Config) {
 	r.subs = sub
 }
 
-func (r *RedisConnector) Loop(ch chan Message) {
-	for {
-		m := <-r.subs.Messages
-		log.Println(m.Elem)
+func (r *RedisConnector) Loop(parsed chan Message) {
+	for msg := range r.subs.Messages {
+		log.Println(msg.Elem)
 
 		// YAML Unmarshalling is wierd
 		var message map[string]interface{}
-		err := goyaml.Unmarshal([]byte(m.Elem), &message)
+		err := goyaml.Unmarshal([]byte(msg.Elem), &message)
 		if err != nil {
 			log.Println("YAML Unmarshal message", err)
 		}
@@ -49,8 +48,8 @@ func (r *RedisConnector) Loop(ch chan Message) {
 			log.Println("YAML Unmarshal body", err)
 		}
 
-		ch <- Message{
-			topic:   m.Channel,
+		parsed <- Message{
+			topic:   msg.Channel,
 			headers: message[":headers"],
 			body:    body,
 		}

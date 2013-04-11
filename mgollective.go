@@ -14,7 +14,13 @@ func Run() {
 	ch := make(chan Message)
 	go connector.Loop(ch)
 	for {
-		m := <-ch
-		log.Printf("%+v", m)
+		message := <-ch
+		log.Printf("%+v", message)
+		if agent, exists := agentRegistry[message.agent]; exists {
+			agent(config).Respond(&message, &connector)
+		} else {
+			log.Printf("No agent '%s'", message.agent)
+		}
+
 	}
 }

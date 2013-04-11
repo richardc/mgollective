@@ -65,7 +65,7 @@ func PingLoop() {
 	connector.Subscribe()
 
 	// Should be a method on *something*.  Probably want to refactor config
-	timeout := 5
+	timeout := 3
 	nodes := Discover(connector, *config, timeout)
 	log.Printf("Discovered %d nodes in %d seconds", len(nodes), timeout)
 

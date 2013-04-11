@@ -2,10 +2,18 @@ package mgollective
 
 import (
 	"github.com/simonz05/godis/redis"
+	. "launchpad.net/gocheck"
 	"testing"
 )
 
-func TestLoop(t *testing.T) {
+// Magic gocheck boilerplate http://labix.org/gocheck
+func Test(t *testing.T) { TestingT(t) }
+
+type MySuite struct{}
+
+var _ = Suite(&MySuite{})
+
+func (s *MySuite) TestLoop(c *C) {
 	in := make(chan *redis.Message)
 	out := make(chan Message)
 	connector := &RedisConnector{
@@ -15,7 +23,7 @@ func TestLoop(t *testing.T) {
 	go connector.Loop(out)
 	in <- &redis.Message{
 		Channel: "mcollective::server::agents",
-		Elem:    []byte(`---
+		Elem: []byte(`---
 :headers:
   reply-to: mcollective::reply::middleware.example.net::4004
 :body: |
@@ -43,5 +51,9 @@ func TestLoop(t *testing.T) {
 	}
 	close(in)
 	parsed := <-out
-	t.Log("Parsed ", parsed)
+	c.Logf("Parsed %#v", parsed)
+
+	c.Check(parsed.topic, Equals, "mcollective::server::agents")
+	c.Check(parsed.agent, Equals, "discovery")
+
 }

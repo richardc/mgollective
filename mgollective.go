@@ -4,7 +4,7 @@ import (
 	"log"
 )
 
-func Run() {
+func Mainloop() {
 	config := getconfig()
 	connector := connectorRegistry["redis"](config)
 	log.Println(connector)

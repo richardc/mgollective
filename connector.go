@@ -9,6 +9,7 @@ type Connector interface {
 type Message struct {
 	topic   string
 	headers interface{}
+	body    interface{}
 }
 
 var connectorRegistry = map[string]func(*Config) Connector{}

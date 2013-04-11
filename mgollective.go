@@ -16,10 +16,10 @@ func Mainloop() {
 	for {
 		message := <-ch
 		log.Printf("Recieved %+v", message)
-		if agent, exists := agentRegistry[message.agent]; exists {
+		if agent, exists := agentRegistry[message.Agent]; exists {
 			agent(config).Respond(&message, &connector)
 		} else {
-			log.Printf("No agent '%s'", message.agent)
+			log.Printf("No agent '%s'", message.Agent)
 		}
 	}
 }

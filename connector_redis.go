@@ -40,19 +40,20 @@ func (r *RedisConnector) Loop(parsed chan Message) {
 		if err != nil {
 			log.Println("YAML Unmarshal message", err)
 		}
-		log.Println("Headers ", message[":headers"])
+		log.Printf("Headers %+v", message[":headers"])
 
-		var body map[string]interface{}
-		err = goyaml.Unmarshal([]byte(message[":body"].(string)), &body)
+		// These on-wire messages are weird.  YAML inside a YAML
+		log.Printf("Raw Body %+v", message[":body"])
+		var decoded Message
+		err = goyaml.Unmarshal([]byte(message[":body"].(string)), &decoded)
 		if err != nil {
 			log.Println("YAML Unmarshal body", err)
 		}
+		log.Printf("Body %+v", decoded)
 
-		parsed <- Message{
-			topic:   msg.Channel,
-			headers: message[":headers"],
-			body:    body,
-		}
+		decoded.topic = msg.Channel
+		//decoded.reply_to = message[":headers"][":reply-to"]
+		parsed <- decoded
 	}
 }
 

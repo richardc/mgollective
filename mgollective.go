@@ -5,12 +5,6 @@ import (
 	"time"
 )
 
-// top level app scope
-type App struct {
-	config    Config
-	connector Connector
-}
-
 func Discover(connector Connector, config Config, timeout int) []map[string]string {
 	log.Println("Discovering nodes")
 	discovery := make(map[string]interface{}, 0)
@@ -31,6 +25,8 @@ func Discover(connector Connector, config Config, timeout int) []map[string]stri
 	}
 	discovery[":requestid"] = "42"
 	discovery[":filter"] = filters
+
+	start := time.Now()
 	connector.Publish(discovery)
 	cb := make(chan Message)
 	go connector.Loop(cb)
@@ -40,7 +36,10 @@ func Discover(connector Connector, config Config, timeout int) []map[string]stri
 		case message := <-cb:
 			log.Printf("got response %+v", message)
 			node := make(map[string]string, 0)
+			node["senderid"] = message.Senderid
+			node["ping"] = time.Since(start).String()
 			nodes = append(nodes, node)
+			log.Println(node)
 		case <-time.After(time.Duration(timeout) * time.Second):
 			log.Println("timed out")
 			return nodes
@@ -68,14 +67,9 @@ func PingLoop() {
 	nodes := Discover(connector, *config, timeout)
 	log.Printf("Discovered %d nodes in %d seconds", len(nodes), timeout)
 
-	message := make(map[string]interface{})
-
 	for _, node := range nodes {
-		log.Printf("sending ping to", node)
-		message["target"] = node["target"]
-		connector.Publish(message)
+		log.Printf("ping from", node)
 	}
-
 }
 
 func DaemonLoop() {

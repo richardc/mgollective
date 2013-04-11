@@ -7,24 +7,24 @@ import (
 
 func Discover(connector Connector, config Config, timeout int) []map[string]string {
 	log.Println("Discovering nodes")
-	discovery := make(map[string]interface{}, 0)
-	discovery["target"] = "mcollective::server::agents"
-	discovery["reply-to"] = config.identity()
-	discovery[":agent"] = "discovery"
-	discovery[":body"] = "ping"
-	discovery[":callerid"] = config.callerid()
-	discovery[":senderid"] = config.senderid()
-	discovery[":ttl"] = 60
-	discovery[":msgtime"] = time.Now().Unix()
-	filters := map[string][]string{
-		"identity": {},
-		"agent":    {},
-		"fact":     {},
-		"compound": {},
-		"cf_class": {},
+	discovery := map[string]interface{}{
+		"target":     "mcollective::server::agents",
+		"reply-to":   config.identity(),
+		":agent":     "discovery",
+		":body":      "ping",
+		":callerid":  config.callerid(),
+		":senderid":  config.senderid(),
+		":ttl":       60,
+		":msgtime":   time.Now().Unix(),
+		":requestid": "42",
+		":filter": map[string][]string{
+			"identity": {},
+			"agent":    {},
+			"fact":     {},
+			"compound": {},
+			"cf_class": {},
+		},
 	}
-	discovery[":requestid"] = "42"
-	discovery[":filter"] = filters
 
 	start := time.Now()
 	connector.Publish(discovery)

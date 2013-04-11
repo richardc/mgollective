@@ -31,14 +31,17 @@ func (r *RedisConnector) Subscribe() {
 	r.subs = sub
 }
 
-func (r *RedisConnector) Publish(msg Message) {
+func (r *RedisConnector) Publish(msg map[string]string) {
 	log.Printf("Publishing %+v", msg)
+	target := msg["target"]
+	delete(msg, "target")
 	body, err := goyaml.Marshal(&msg)
 	if err != nil {
 		log.Println("Failed to Marshal", err)
 		return
 	}
-	log.Println("Marshalled to", body)
+	log.Printf("Marshalled to %s", body)
+	r.client.Publish(target, "body")
 }
 
 func (r *RedisConnector) Loop(parsed chan Message) {

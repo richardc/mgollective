@@ -18,12 +18,13 @@ func (a *DiscoveryAgent) Respond(msg Message, connector Connector) {
 		log.Printf("Not for us")
 		return
 	}
+	reply := make(map[string]string)
 
-	reply := Message{target: msg.reply_to}
+	reply["target"] = msg.reply_to
 	if msg.Body == "ping" {
-		reply.Body = "pong"
+		reply["body"] = "pong"
 	} else {
-		reply.Body = "Unknown Request: " + msg.Body
+		reply["body"] = "Unknown Request: " + msg.Body
 	}
 
 	log.Printf("Going to send %+v", reply)

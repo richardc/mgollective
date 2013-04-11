@@ -3,7 +3,7 @@ package mgollective
 type Connector interface {
 	Connect()
 	Subscribe()
-	Publish(Message)
+	Publish(map[string]string)
 	Loop(chan Message)
 }
 

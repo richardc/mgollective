@@ -13,6 +13,7 @@ type MySuite struct{}
 
 var _ = Suite(&MySuite{})
 
+// Send a YAML document, test that it came back in the structures we expected
 func (s *MySuite) TestLoop(c *C) {
 	in := make(chan *redis.Message)
 	out := make(chan Message)

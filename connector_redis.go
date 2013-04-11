@@ -7,6 +7,7 @@ import (
 )
 
 type RedisConnector struct {
+	config *Config
 	client *redis.Client
 	subs   *redis.Sub
 }
@@ -15,9 +16,9 @@ func (r *RedisConnector) Connect() {
 	log.Println("Connecting to redis")
 }
 
-func (r *RedisConnector) Subscribe(config *Config) {
+func (r *RedisConnector) Subscribe() {
 	var channels []string
-	for _, collective := range config.collectives() {
+	for _, collective := range r.config.collectives() {
 		topic := collective + "::server::agents"
 		channels = append(channels, topic)
 	}
@@ -28,6 +29,10 @@ func (r *RedisConnector) Subscribe(config *Config) {
 		log.Fatal(err)
 	}
 	r.subs = sub
+}
+
+func (r *RedisConnector) Publish(msg Message) {
+	log.Printf("Publishing %+v", msg)
 }
 
 func (r *RedisConnector) Loop(parsed chan Message) {
@@ -65,7 +70,10 @@ func makeRedisConnector(config *Config) Connector {
 	db := config.GetIntDefault("connector", "database", 1)
 	password := config.GetStringDefault("connector", "password", "")
 	client := redis.New("tcp:"+host+":"+port, db, password)
-	return &RedisConnector{client: client}
+	return &RedisConnector{
+		config: config,
+		client: client,
+	}
 }
 
 func init() {

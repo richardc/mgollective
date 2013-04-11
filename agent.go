@@ -1,7 +1,7 @@
 package mgollective
 
 type Agent interface {
-	Respond(*Message, *Connector)
+	Respond(Message, Connector)
 }
 
 var agentRegistry = map[string]func(*Config) Agent{}

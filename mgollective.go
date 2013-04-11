@@ -9,7 +9,7 @@ func Mainloop() {
 	connector := connectorRegistry["redis"](config)
 	log.Println(connector)
 	connector.Connect()
-	connector.Subscribe(config)
+	connector.Subscribe()
 
 	ch := make(chan Message)
 	go connector.Loop(ch)
@@ -17,7 +17,7 @@ func Mainloop() {
 		message := <-ch
 		log.Printf("Recieved %+v", message)
 		if agent, exists := agentRegistry[message.Agent]; exists {
-			agent(config).Respond(&message, &connector)
+			agent(config).Respond(message, connector)
 		} else {
 			log.Printf("No agent '%s'", message.Agent)
 		}

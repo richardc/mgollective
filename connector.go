@@ -2,7 +2,8 @@ package mgollective
 
 type Connector interface {
 	Connect()
-	Subscribe(*Config)
+	Subscribe()
+	Publish(Message)
 	Loop(chan Message)
 }
 

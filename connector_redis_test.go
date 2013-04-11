@@ -54,7 +54,7 @@ func (s *MySuite) TestLoop(c *C) {
 	c.Logf("Parsed %#v", parsed)
 
 	c.Check(parsed.topic, Equals, "mcollective::server::agents")
-	//c.Check(parsed.reply_to, Equals, "mcollective::reply::middleware.example.net::4004")
+	c.Check(parsed.reply_to, Equals, "mcollective::reply::middleware.example.net::4004")
 	c.Check(parsed.Agent, Equals, "discovery")
 	c.Check(parsed.Senderid, Equals, "middleware.example.net")
 	c.Check(parsed.Collective, Equals, "mcollective")

@@ -34,26 +34,27 @@ func (r *RedisConnector) Loop(parsed chan Message) {
 	for msg := range r.subs.Messages {
 		log.Println(msg.Elem)
 
-		// YAML Unmarshalling is wierd
-		var message map[string]interface{}
-		err := goyaml.Unmarshal([]byte(msg.Elem), &message)
+		// YAML Unmarshalling is weird.  Extra weirded by the way these
+		// messages are a document inside a document
+		var wrapper struct {
+			Headers map[string]string `yaml:":headers"`
+			Body    string            `yaml:":body"`
+		}
+		err := goyaml.Unmarshal([]byte(msg.Elem), &wrapper)
 		if err != nil {
 			log.Println("YAML Unmarshal message", err)
 		}
-		log.Printf("Headers %+v", message[":headers"])
 
-		// These on-wire messages are weird.  YAML inside a YAML
-		log.Printf("Raw Body %+v", message[":body"])
-		var decoded Message
-		err = goyaml.Unmarshal([]byte(message[":body"].(string)), &decoded)
+		// Unpack the :body key
+		var message Message
+		err = goyaml.Unmarshal([]byte(wrapper.Body), &message)
 		if err != nil {
 			log.Println("YAML Unmarshal body", err)
 		}
-		log.Printf("Body %+v", decoded)
 
-		decoded.topic = msg.Channel
-		//decoded.reply_to = message[":headers"][":reply-to"]
-		parsed <- decoded
+		message.topic = msg.Channel
+		message.reply_to = wrapper.Headers["reply-to"]
+		parsed <- message
 	}
 }
 

@@ -9,8 +9,8 @@ type Config struct {
 	config *goconfig.ConfigFile
 }
 
-func getconfig() *Config {
-	conf, err := goconfig.ReadConfigFile("mgo.client.conf")
+func getconfig(file string) *Config {
+	conf, err := goconfig.ReadConfigFile(file)
 	if err != nil {
 		log.Fatal("Couldn't open config ", err)
 	}

@@ -4,9 +4,31 @@ import (
 	"log"
 )
 
-func Mainloop() {
-	config := getconfig()
-	connector := connectorRegistry["redis"](config)
+func PingLoop() {
+	config := getconfig("mgo.conf")
+	connectorname := config.GetStringDefault("connector", "class", "redis")
+	var connector Connector
+	if factory, exists := connectorRegistry[connectorname]; exists {
+		connector = factory(config)
+	} else {
+		log.Fatal("No connector called %s", connectorname)
+	}
+
+	log.Println(connector)
+	connector.Connect()
+
+}
+
+func DaemonLoop() {
+	config := getconfig("mgo.conf")
+	connectorname := config.GetStringDefault("connector", "class", "redis")
+	var connector Connector
+	if factory, exists := connectorRegistry[connectorname]; exists {
+		connector = factory(config)
+	} else {
+		log.Fatal("No connector called %s", connectorname)
+	}
+
 	log.Println(connector)
 	connector.Connect()
 	connector.Subscribe()

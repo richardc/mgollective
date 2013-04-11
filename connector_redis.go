@@ -2,6 +2,7 @@ package mgollective
 
 import (
 	"github.com/simonz05/godis/redis"
+	"launchpad.net/goyaml"
 	"log"
 )
 
@@ -27,6 +28,26 @@ func (r *RedisConnector) Subscribe(config *Config) {
 		log.Fatal(err)
 	}
 	r.subs = sub
+}
+
+func (r *RedisConnector) Loop(ch chan Message) {
+	for {
+		m := <-r.subs.Messages
+		log.Println(m.Elem)
+
+		var body map[string]map[string]interface{}
+		//var body RedisMessage
+		err := goyaml.Unmarshal([]byte(m.Elem), &body)
+		if err != nil {
+			log.Println("YAML Unmarshal", err)
+		}
+		log.Println(body)
+		log.Println("Headers ", body[":headers"])
+		ch <- Message{
+			topic:   m.Channel,
+			headers: body[":headers"],
+		}
+	}
 }
 
 func makeRedisConnector(config *Config) Connector {

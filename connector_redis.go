@@ -1,14 +1,14 @@
 package mgollective
 
 import (
-    "log"
+	"log"
 )
 
 type RedisConnector struct {
 }
 
 func (r RedisConnector) Connect() int {
-    log.Println("Connecting to redis")
+	log.Println("Connecting to redis")
 	return 0
 }
 

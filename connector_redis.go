@@ -12,15 +12,24 @@ type RedisConnector struct {
 	subs   *redis.Sub
 }
 
+type RedisMessageWrapper struct {
+	Headers map[string]string `yaml:":headers"`
+	Body    string            `yaml:":body"`
+}
+
 func (r *RedisConnector) Connect() {
 	log.Println("Connecting to redis")
 }
 
 func (r *RedisConnector) Subscribe() {
 	var channels []string
-	for _, collective := range r.config.collectives() {
-		topic := collective + "::server::agents"
-		channels = append(channels, topic)
+	if !r.config.client {
+		for _, collective := range r.config.collectives() {
+			topic := collective + "::server::agents"
+			channels = append(channels, topic)
+		}
+	} else {
+		channels = append(channels, r.config.identity())
 	}
 	log.Println("Subscribing to ", channels)
 
@@ -31,17 +40,33 @@ func (r *RedisConnector) Subscribe() {
 	r.subs = sub
 }
 
-func (r *RedisConnector) Publish(msg map[string]string) {
+func (r *RedisConnector) Publish(msg map[string]interface{}) {
 	log.Printf("Publishing %+v", msg)
 	target := msg["target"]
+	reply_to := msg["reply-to"]
 	delete(msg, "target")
+	delete(msg, "reply-to")
 	body, err := goyaml.Marshal(&msg)
 	if err != nil {
 		log.Println("Failed to Marshal", err)
 		return
 	}
-	log.Printf("Marshalled to %s", body)
-	r.client.Publish(target, "body")
+	log.Printf("Marshalled body to %s", body)
+	var wrapper RedisMessageWrapper
+	wrapper.Body = string(body)
+	headers := make(map[string]string, 0)
+	if reply_to != nil {
+		headers["reply-to"] = reply_to.(string)
+	}
+	wrapper.Headers = headers
+	yaml_wrapper, err := goyaml.Marshal(&wrapper)
+	if err != nil {
+		log.Println("Failed to Marshal wrapper", err)
+		return
+	}
+	log.Printf("Marshalled wrapper as %s", yaml_wrapper)
+
+	r.client.Publish(target.(string), yaml_wrapper)
 }
 
 func (r *RedisConnector) Loop(parsed chan Message) {
@@ -50,10 +75,7 @@ func (r *RedisConnector) Loop(parsed chan Message) {
 
 		// YAML Unmarshalling is weird.  Extra weirded by the way these
 		// messages are a document inside a document
-		var wrapper struct {
-			Headers map[string]string `yaml:":headers"`
-			Body    string            `yaml:":body"`
-		}
+		var wrapper RedisMessageWrapper
 		err := goyaml.Unmarshal([]byte(msg.Elem), &wrapper)
 		if err != nil {
 			log.Println("YAML Unmarshal message", err)

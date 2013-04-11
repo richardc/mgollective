@@ -18,7 +18,7 @@ func (a *DiscoveryAgent) Respond(msg Message, connector Connector) {
 		log.Printf("Not for us")
 		return
 	}
-	reply := make(map[string]string)
+	reply := make(map[string]interface{})
 
 	reply["target"] = msg.reply_to
 	if msg.Body == "ping" {

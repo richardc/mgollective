@@ -15,12 +15,11 @@ func Run() {
 	go connector.Loop(ch)
 	for {
 		message := <-ch
-		log.Printf("%+v", message)
+		log.Printf("Recieved %+v", message)
 		if agent, exists := agentRegistry[message.agent]; exists {
 			agent(config).Respond(&message, &connector)
 		} else {
 			log.Printf("No agent '%s'", message.agent)
 		}
-
 	}
 }

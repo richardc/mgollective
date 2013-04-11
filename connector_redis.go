@@ -7,9 +7,8 @@ import (
 type RedisConnector struct {
 }
 
-func (r RedisConnector) Connect() int {
+func (r *RedisConnector) Connect() {
 	log.Println("Connecting to redis")
-	return 0
 }
 
 func makeRedisConnector(config *Config) Connector {

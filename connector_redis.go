@@ -39,12 +39,15 @@ func (r *RedisConnector) Loop(ch chan Message) {
 		var message map[string]interface{}
 		err := goyaml.Unmarshal([]byte(m.Elem), &message)
 		if err != nil {
-			log.Println("YAML Unmarshal", err)
+			log.Println("YAML Unmarshal message", err)
 		}
 		log.Println("Headers ", message[":headers"])
 
 		var body map[string]interface{}
 		err = goyaml.Unmarshal([]byte(message[":body"].(string)), &body)
+		if err != nil {
+			log.Println("YAML Unmarshal body", err)
+		}
 
 		ch <- Message{
 			topic:   m.Channel,

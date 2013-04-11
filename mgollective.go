@@ -15,6 +15,6 @@ func Run() {
 	go connector.Loop(ch)
 	for {
 		m := <-ch
-		log.Printf("%#v", m)
+		log.Printf("%+v", m)
 	}
 }

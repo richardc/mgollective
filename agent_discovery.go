@@ -19,20 +19,22 @@ func (a *DiscoveryAgent) Respond(msg Message, connector Connector) {
 		log.Printf("Not for us")
 		return
 	}
-	reply := make(map[string]interface{})
-
-	reply["target"] = msg.reply_to
-	reply[":requestid"] = msg.Requestid
-	reply[":senderagent"] = "discovery"
-	reply[":senderid"] = a.config.senderid()
-	reply[":msgtime"] = time.Now().Unix()
+	var body string
 	if msg.Body == "ping" {
-		reply["body"] = "pong"
+		body = "pong"
 	} else {
-		reply["body"] = "Unknown Request: " + msg.Body
+		body = "Unknown Request: " + msg.Body
 	}
 
-	log.Printf("Going to send %+v", reply)
+	reply := map[string]interface{}{
+		"target":       msg.reply_to,
+		":requestid":   msg.Requestid,
+		":senderagent": "discovery",
+		":senderid":    a.config.senderid(),
+		":msgtime":     time.Now().Unix(),
+		"body":         body,
+	}
+
 	connector.Publish(reply)
 }
 

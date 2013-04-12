@@ -50,7 +50,7 @@ func (r *RedisConnector) Publish(msg Message) {
 	}
 
 	var wrapper RedisMessageWrapper
-	wrapper.Body = "---\n" + string(body)
+	wrapper.Body = "---\n" + string(body) + "\n"
 	headers := make(map[string]string, 0)
 	if msg.reply_to != "" {
 		headers["reply-to"] = msg.reply_to
@@ -72,14 +72,13 @@ func (r *RedisConnector) Loop(parsed chan Message) {
 		// Pretend like it was just a string with a colon
 		silly_ruby, _ := regexp.Compile("!ruby/sym ")
 		wire := silly_ruby.ReplaceAll(msg.Elem, []byte(":"))
-		log.Printf("%s", wire)
 
 		var wrapper RedisMessageWrapper
 		if err := goyaml.Unmarshal(wire, &wrapper); err != nil {
 			log.Println("YAML Unmarshal wrapper", err)
 			continue
 		}
-		log.Printf("%+v", wrapper)
+		log.Printf("unpackged wrapper %+v", wrapper)
 
 		var body MessageBody
 		if err := goyaml.Unmarshal([]byte(wrapper.Body), &body); err != nil {

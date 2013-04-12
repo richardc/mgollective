@@ -8,10 +8,10 @@ type MessageBody struct {
 	Senderagent string `yaml":senderagent",omitempty`
 	Agent       string `yaml:":agent"`
 	Filter      struct {
-		Identify []string `yaml:":identify"`
-		Agent    []string `yaml:":agent"`
-		Fact     []string `yaml:":fact"`
-		Compound []string `yaml:":compound"`
+		Identity []string `yaml:"identity"`
+		Agent    []string `yaml:"agent"`
+		Fact     []string `yaml:"fact"`
+		Compound []string `yaml:"compound"`
 		Cf_class []string `yaml:"cf_class"`
 	} `yaml:":filter"`
 	Senderid   string `yaml:":senderid"`

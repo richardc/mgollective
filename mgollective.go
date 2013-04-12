@@ -7,22 +7,17 @@ import (
 
 func Discover(connector Connector, config Config, timeout int) []map[string]string {
 	log.Println("Discovering nodes")
-	discovery := map[string]interface{}{
-		"target":     "mcollective::server::agents",
-		"reply-to":   config.identity(),
-		":agent":     "discovery",
-		":body":      "ping",
-		":callerid":  config.callerid(),
-		":senderid":  config.senderid(),
-		":ttl":       60,
-		":msgtime":   time.Now().Unix(),
-		":requestid": "42",
-		":filter": map[string][]string{
-			"identity": {},
-			"agent":    {},
-			"fact":     {},
-			"compound": {},
-			"cf_class": {},
+	discovery := Message{
+		target:   "mcollective::server::agents",
+		reply_to: config.identity(),
+		body: MessageBody{
+			Agent:     "discovery",
+			Body:      "ping",
+			Callerid:  config.callerid(),
+			Senderid:  config.senderid(),
+			Ttl:       60,
+			Msgtime:   time.Now().Unix(),
+			Requestid: "42",
 		},
 	}
 
@@ -37,7 +32,7 @@ func Discover(connector Connector, config Config, timeout int) []map[string]stri
 		case message := <-cb:
 			log.Printf("got response %+v", message)
 			node := map[string]string{
-				"senderid": message.Senderid,
+				"senderid": message.body.Senderid,
 				"ping":     time.Since(start).String(),
 			}
 			nodes = append(nodes, node)
@@ -93,10 +88,10 @@ func DaemonLoop() {
 	for {
 		message := <-ch
 		log.Printf("Recieved %+v", message)
-		if agent, exists := agentRegistry[message.Agent]; exists {
+		if agent, exists := agentRegistry[message.body.Agent]; exists {
 			agent(config).Respond(message, connector)
 		} else {
-			log.Printf("No agent '%s'", message.Agent)
+			log.Printf("No agent '%s'", message.body.Agent)
 		}
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"github.com/simonz05/godis/redis"
 	"launchpad.net/goyaml"
 	"log"
+	"regexp"
 )
 
 type RedisConnector struct {
@@ -40,23 +41,19 @@ func (r *RedisConnector) Subscribe() {
 	r.subs = sub
 }
 
-func (r *RedisConnector) Publish(msg map[string]interface{}) {
+func (r *RedisConnector) Publish(msg Message) {
 	log.Printf("Publishing %+v", msg)
-	target := msg["target"]
-	reply_to := msg["reply-to"]
-	delete(msg, "target")
-	delete(msg, "reply-to")
-	body, err := goyaml.Marshal(&msg)
+	body, err := goyaml.Marshal(&msg.body)
 	if err != nil {
 		log.Println("Failed to Marshal", err)
 		return
 	}
-	log.Printf("Marshalled body to %s", body)
+
 	var wrapper RedisMessageWrapper
 	wrapper.Body = "---\n" + string(body)
 	headers := make(map[string]string, 0)
-	if reply_to != nil {
-		headers["reply-to"] = reply_to.(string)
+	if msg.reply_to != "" {
+		headers["reply-to"] = msg.reply_to
 	}
 	wrapper.Headers = headers
 	yaml_wrapper, err := goyaml.Marshal(&wrapper)
@@ -66,30 +63,35 @@ func (r *RedisConnector) Publish(msg map[string]interface{}) {
 	}
 	log.Printf("Marshalled wrapper as %s", yaml_wrapper)
 
-	r.client.Publish(target.(string), yaml_wrapper)
+	r.client.Publish(msg.target, yaml_wrapper)
 }
 
 func (r *RedisConnector) Loop(parsed chan Message) {
 	for msg := range r.subs.Messages {
-		log.Println(msg.Elem)
+		// ruby symbols/YAML encoding is special
+		// Pretend like it was just a string with a colon
+		silly_ruby, _ := regexp.Compile("!ruby/sym ")
+		wire := silly_ruby.ReplaceAll(msg.Elem, []byte(":"))
+		log.Printf("%s", wire)
 
-		// YAML Unmarshalling is weird.  Extra weirded by the way these
-		// messages are a document inside a document
 		var wrapper RedisMessageWrapper
-		err := goyaml.Unmarshal([]byte(msg.Elem), &wrapper)
-		if err != nil {
-			log.Println("YAML Unmarshal message", err)
+		if err := goyaml.Unmarshal(wire, &wrapper); err != nil {
+			log.Println("YAML Unmarshal wrapper", err)
+			continue
 		}
+		log.Printf("%+v", wrapper)
 
-		// Unpack the :body key
-		var message Message
-		err = goyaml.Unmarshal([]byte(wrapper.Body), &message)
-		if err != nil {
+		var body MessageBody
+		if err := goyaml.Unmarshal([]byte(wrapper.Body), &body); err != nil {
 			log.Println("YAML Unmarshal body", err)
+			continue
 		}
 
-		message.topic = msg.Channel
-		message.reply_to = wrapper.Headers["reply-to"]
+		message := Message{
+			topic:    msg.Channel,
+			reply_to: wrapper.Headers["reply-to"],
+			body:     body,
+		}
 		parsed <- message
 	}
 }

@@ -4,12 +4,10 @@ package mgollective
 // public fields (ie Agent)
 // As the original YAML is from ruby and is keyed on symbols we make heavy
 // use of the doc comment `yaml:":agent"` which says map that into Agent
-type Message struct {
-	target   string
-	topic    string
-	reply_to string
-	Agent    string `yaml:":agent"`
-	Filter   struct {
+type MessageBody struct {
+	Senderagent string `yaml":senderagent",omitempty`
+	Agent       string `yaml:":agent"`
+	Filter      struct {
 		Identify []string `yaml:":identify"`
 		Agent    []string `yaml:":agent"`
 		Fact     []string `yaml:":fact"`
@@ -18,9 +16,16 @@ type Message struct {
 	} `yaml:":filter"`
 	Senderid   string `yaml:":senderid"`
 	Collective string `yaml:":collective"`
-	Msgtime    string `yaml:":msgtime"`
-	Ttl        string `yaml:":ttl"`
+	Msgtime    int64  `yaml:":msgtime"`
+	Ttl        int64  `yaml:":ttl"`
 	Requestid  string `yaml:":requestid"`
 	Callerid   string `yaml:":callerid"`
 	Body       string `yaml:":body"`
+}
+
+type Message struct {
+	target   string
+	topic    string
+	reply_to string
+	body     MessageBody
 }

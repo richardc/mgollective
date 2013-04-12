@@ -20,19 +20,21 @@ func (a *DiscoveryAgent) Respond(msg Message, connector Connector) {
 		return
 	}
 	var body string
-	if msg.Body == "ping" {
+	if msg.body.Body == "ping" {
 		body = "pong"
 	} else {
-		body = "Unknown Request: " + msg.Body
+		body = "Unknown Request: " + msg.body.Body
 	}
 
-	reply := map[string]interface{}{
-		"target":       msg.reply_to,
-		":requestid":   msg.Requestid,
-		":senderagent": "discovery",
-		":senderid":    a.config.senderid(),
-		":msgtime":     time.Now().Unix(),
-		"body":         body,
+	reply := Message{
+		target: msg.reply_to,
+		body: MessageBody{
+			Requestid:   msg.body.Requestid,
+			Senderagent: "discovery",
+			Senderid:    a.config.senderid(),
+			Msgtime:     time.Now().Unix(),
+			Body:        body,
+		},
 	}
 
 	connector.Publish(reply)

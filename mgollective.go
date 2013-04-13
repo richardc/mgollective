@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func Discover(connector Connector, config Config, timeout int) []map[string]string {
+func Discover(connector Connector, config Config, callback func(Message)) {
 	log.Println("Discovering nodes")
 	discovery := Message{
 		target:   "mcollective::server::agents",
@@ -22,31 +22,23 @@ func Discover(connector Connector, config Config, timeout int) []map[string]stri
 		},
 	}
 
-	start := time.Now()
 	cb := make(chan Message)
 	go connector.Loop(cb)
 	connector.Publish(discovery)
 
-	nodes := make([]map[string]string, 0)
 	for {
 		select {
 		case message := <-cb:
-			log.Printf("got response %+v", message)
-			node := map[string]string{
-				"senderid": message.body.Senderid,
-				"ping":     time.Since(start).String(),
-			}
-			nodes = append(nodes, node)
-			log.Println(node)
-		case <-time.After(time.Duration(timeout) * time.Second):
+			callback(message)
+		case <-time.After(3 * time.Second):
 			log.Println("timed out")
-			return nodes
+			return
 		}
 	}
-	return nodes
 }
 
 func PingLoop() {
+	start := time.Now()
 	config := getconfig("mgo.conf", true)
 	connectorname := config.GetStringDefault("connector", "class", "redis")
 	var connector Connector
@@ -60,14 +52,17 @@ func PingLoop() {
 	connector.Connect()
 	connector.Subscribe()
 
+	nodes := make([]map[string]string, 0)
 	// Should be a method on *something*.  Probably want to refactor config
-	timeout := 3
-	nodes := Discover(connector, *config, timeout)
-	log.Printf("Discovered %d nodes in %d seconds", len(nodes), timeout)
-
-	for _, node := range nodes {
-		log.Printf("ping from %+v", node)
-	}
+	Discover(connector, *config, func(message Message) {
+		node := map[string]string{
+			"senderid": message.body.Senderid,
+			"ping":     time.Since(start).String(),
+		}
+		nodes = append(nodes, node)
+		log.Println(node)
+	})
+	log.Printf("Discovered %d nodes", len(nodes))
 }
 
 func DaemonLoop() {

@@ -13,7 +13,7 @@ func makeDaemonCommand() Command {
 }
 
 func init() {
-	registerCommand("ping", makeDaemonCommand)
+	registerCommand("daemon", makeDaemonCommand)
 }
 
 func (d *DaemonCommand) Run() {

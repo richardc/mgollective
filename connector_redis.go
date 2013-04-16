@@ -3,7 +3,6 @@ package mgollective
 import (
 	"github.com/simonz05/godis/redis"
 	"launchpad.net/goyaml"
-	"log"
 	"regexp"
 )
 
@@ -19,7 +18,7 @@ type RedisMessageWrapper struct {
 }
 
 func (r *RedisConnector) Connect() {
-	log.Println("Connecting to redis")
+	// for this connector it's a noop
 }
 
 func (r *RedisConnector) Subscribe() {
@@ -32,20 +31,21 @@ func (r *RedisConnector) Subscribe() {
 	} else {
 		channels = append(channels, r.config.identity())
 	}
-	log.Println("Subscribing to ", channels)
+	logger.Debug("Subscribing to ", channels)
 
 	sub, err := r.client.Subscribe(channels...)
 	if err != nil {
-		log.Fatal(err)
+		logger.Error(err)
+		panic(err)
 	}
 	r.subs = sub
 }
 
 func (r *RedisConnector) Publish(msg Message) {
-	log.Printf("Publishing %+v", msg)
+	logger.Debugf("Publishing %+v", msg)
 	body, err := goyaml.Marshal(&msg.body)
 	if err != nil {
-		log.Println("Failed to Marshal", err)
+		logger.Debugf("Failed to Marshal", err)
 		return
 	}
 
@@ -58,10 +58,10 @@ func (r *RedisConnector) Publish(msg Message) {
 	wrapper.Headers = headers
 	yaml_wrapper, err := goyaml.Marshal(&wrapper)
 	if err != nil {
-		log.Println("Failed to Marshal wrapper", err)
+		logger.Debug("Failed to Marshal wrapper", err)
 		return
 	}
-	log.Printf("Marshalled wrapper as %s", yaml_wrapper)
+	logger.Tracef("Marshalled wrapper as %s", yaml_wrapper)
 
 	r.client.Publish(msg.target, yaml_wrapper)
 }
@@ -75,14 +75,15 @@ func (r *RedisConnector) Loop(parsed chan Message) {
 
 		var wrapper RedisMessageWrapper
 		if err := goyaml.Unmarshal(wire, &wrapper); err != nil {
-			log.Println("YAML Unmarshal wrapper", err)
+			logger.Debug("YAML Unmarshal wrapper", err)
+			logger.Info("Recieved undecodable message, skipping it")
 			continue
 		}
-		log.Printf("unpackged wrapper %+v", wrapper)
+		logger.Tracef("unpackged wrapper %+v", wrapper)
 
 		var body MessageBody
 		if err := goyaml.Unmarshal([]byte(wrapper.Body), &body); err != nil {
-			log.Println("YAML Unmarshal body", err)
+			logger.Debug("YAML Unmarshal body", err)
 			continue
 		}
 
@@ -96,7 +97,6 @@ func (r *RedisConnector) Loop(parsed chan Message) {
 }
 
 func makeRedisConnector(config *Config) Connector {
-	log.Println("makeRedisConnector")
 	host := config.GetStringDefault("connector", "host", "127.0.0.1")
 	port := config.GetStringDefault("connector", "port", "6379")
 	db := config.GetIntDefault("connector", "database", 1)

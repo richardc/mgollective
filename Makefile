@@ -7,6 +7,6 @@ $(MGO_BIN): mgo/mgo.go *.go
 
 test:
 	go test -v
-	
+
 fmt:
 	gofmt -s -l -w .

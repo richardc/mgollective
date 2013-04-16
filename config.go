@@ -2,7 +2,7 @@ package mgollective
 
 import (
 	"github.com/msbranco/goconfig"
-	"log"
+	"os"
 )
 
 type Config struct {
@@ -13,7 +13,8 @@ type Config struct {
 func getconfig(file string, client bool) *Config {
 	conf, err := goconfig.ReadConfigFile(file)
 	if err != nil {
-		log.Fatal("Couldn't open config ", err)
+		logger.Criticalf("Couldn't open config ", err)
+		os.Exit(1)
 	}
 	return &Config{config: conf, client: client}
 }

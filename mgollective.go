@@ -1,12 +1,12 @@
 package mgollective
 
 import (
-	"log"
+	"fmt"
+	"os"
 	"time"
 )
 
 func Discover(connector Connector, config Config, callback func(Message)) {
-	log.Println("Discovering nodes")
 	discovery := Message{
 		target:   "mcollective::server::agents",
 		reply_to: config.identity(),
@@ -31,7 +31,6 @@ func Discover(connector Connector, config Config, callback func(Message)) {
 		case message := <-cb:
 			callback(message)
 		case <-time.After(3 * time.Second):
-			log.Println("timed out")
 			return
 		}
 	}
@@ -45,24 +44,38 @@ func PingLoop() {
 	if factory, exists := connectorRegistry[connectorname]; exists {
 		connector = factory(config)
 	} else {
-		log.Fatal("No connector called %s", connectorname)
+		fmt.Printf("No connector called %s", connectorname)
+		os.Exit(1)
 	}
 
-	log.Println(connector)
 	connector.Connect()
 	connector.Subscribe()
 
-	nodes := make([]map[string]string, 0)
-	// Should be a method on *something*.  Probably want to refactor config
+	pings := make([]time.Duration, 0)
+	// Discover should be a method on *something*.  Probably want to refactor config
 	Discover(connector, *config, func(message Message) {
-		node := map[string]string{
-			"senderid": message.body.Senderid,
-			"ping":     time.Since(start).String(),
-		}
-		nodes = append(nodes, node)
-		log.Println(node)
+		ping := time.Since(start)
+		pings = append(pings, ping)
+		fmt.Printf("%-40s time=%s\n", message.body.Senderid, ping.String())
 	})
-	log.Printf("Discovered %d nodes", len(nodes))
+
+	var min, max, sum time.Duration
+	min = pings[0]
+	for _, ping := range pings {
+		sum += ping
+		if ping > max {
+			max = ping
+		}
+		if ping < min {
+			min = ping
+		}
+	}
+
+	mean := time.Duration(int64(sum) / int64(len(pings)))
+	fmt.Println()
+	fmt.Println("--- ping statistics ---")
+	fmt.Printf("%d replies max: %s min: %s avg: %s\n",
+		len(pings), max.String(), min.String(), mean.String())
 }
 
 func DaemonLoop() {
@@ -72,10 +85,10 @@ func DaemonLoop() {
 	if factory, exists := connectorRegistry[connectorname]; exists {
 		connector = factory(config)
 	} else {
-		log.Fatal("No connector called %s", connectorname)
+		fmt.Printf("No connector called %s", connectorname)
+		os.Exit(1)
 	}
 
-	log.Println(connector)
 	connector.Connect()
 	connector.Subscribe()
 
@@ -83,11 +96,11 @@ func DaemonLoop() {
 	go connector.Loop(ch)
 	for {
 		message := <-ch
-		log.Printf("Recieved %+v", message)
+		logger.Debugf("Recieved %+v", message)
 		if agent, exists := agentRegistry[message.body.Agent]; exists {
 			agent(config).Respond(message, connector)
 		} else {
-			log.Printf("No agent '%s'", message.body.Agent)
+			logger.Debugf("No agent '%s'", message.body.Agent)
 		}
 	}
 }

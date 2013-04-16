@@ -1,7 +1,6 @@
 package mgollective
 
 import (
-	"log"
 	"time"
 )
 
@@ -14,9 +13,9 @@ func (a *DiscoveryAgent) matches(msg Message) bool {
 }
 
 func (a *DiscoveryAgent) Respond(msg Message, connector Connector) {
-	log.Printf("Discover agent handling %+v", msg)
+	logger.Infof("Discover agent handling %+v", msg)
 	if !a.matches(msg) {
-		log.Printf("Not for us")
+		logger.Debugf("Not for us")
 		return
 	}
 	var body string

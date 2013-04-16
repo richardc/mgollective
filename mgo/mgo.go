@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+	defer mgollective.FlushLog()
 	flag.Parse()
 	command := flag.Arg(0)
 	if command == "ping" {

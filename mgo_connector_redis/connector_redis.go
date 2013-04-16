@@ -1,13 +1,14 @@
-package mgollective
+package mgo_connector_redis
 
 import (
+	"github.com/richardc/mgollective/mgollective"
 	"github.com/simonz05/godis/redis"
 	"launchpad.net/goyaml"
 	"regexp"
 )
 
 type RedisConnector struct {
-	config *Config
+	config *mgollective.Config
 	client *redis.Client
 	subs   *redis.Sub
 }
@@ -23,50 +24,50 @@ func (r *RedisConnector) Connect() {
 
 func (r *RedisConnector) Subscribe() {
 	var channels []string
-	if !r.config.client {
-		for _, collective := range r.config.collectives() {
+	if !r.config.IsClient() {
+		for _, collective := range r.config.Collectives() {
 			topic := collective + "::server::agents"
 			channels = append(channels, topic)
 		}
 	} else {
-		channels = append(channels, r.config.identity())
+		channels = append(channels, r.config.Identity())
 	}
-	logger.Debug("Subscribing to ", channels)
+	mgollective.Logger().Debug("Subscribing to ", channels)
 
 	sub, err := r.client.Subscribe(channels...)
 	if err != nil {
-		logger.Error(err)
+		mgollective.Logger().Error(err)
 		panic(err)
 	}
 	r.subs = sub
 }
 
-func (r *RedisConnector) Publish(msg Message) {
-	logger.Debugf("Publishing %+v", msg)
-	body, err := goyaml.Marshal(&msg.body)
+func (r *RedisConnector) Publish(msg mgollective.Message) {
+	mgollective.Logger().Debugf("Publishing %+v", msg)
+	body, err := goyaml.Marshal(&msg.Body)
 	if err != nil {
-		logger.Debugf("Failed to Marshal", err)
+		mgollective.Logger().Debugf("Failed to Marshal", err)
 		return
 	}
 
 	var wrapper RedisMessageWrapper
 	wrapper.Body = "---\n" + string(body) + "\n"
 	headers := make(map[string]string, 0)
-	if msg.reply_to != "" {
-		headers["reply-to"] = msg.reply_to
+	if msg.Reply_to != "" {
+		headers["reply-to"] = msg.Reply_to
 	}
 	wrapper.Headers = headers
 	yaml_wrapper, err := goyaml.Marshal(&wrapper)
 	if err != nil {
-		logger.Debug("Failed to Marshal wrapper", err)
+		mgollective.Logger().Debug("Failed to Marshal wrapper", err)
 		return
 	}
-	logger.Tracef("Marshalled wrapper as %s", yaml_wrapper)
+	mgollective.Logger().Tracef("Marshalled wrapper as %s", yaml_wrapper)
 
-	r.client.Publish(msg.target, yaml_wrapper)
+	r.client.Publish(msg.Target, yaml_wrapper)
 }
 
-func (r *RedisConnector) Loop(parsed chan Message) {
+func (r *RedisConnector) Loop(parsed chan mgollective.Message) {
 	for msg := range r.subs.Messages {
 		// ruby symbols/YAML encoding is special
 		// Pretend like it was just a string with a colon
@@ -75,28 +76,28 @@ func (r *RedisConnector) Loop(parsed chan Message) {
 
 		var wrapper RedisMessageWrapper
 		if err := goyaml.Unmarshal(wire, &wrapper); err != nil {
-			logger.Debug("YAML Unmarshal wrapper", err)
-			logger.Info("Recieved undecodable message, skipping it")
+			mgollective.Logger().Debug("YAML Unmarshal wrapper", err)
+			mgollective.Logger().Info("Recieved undecodable message, skipping it")
 			continue
 		}
-		logger.Tracef("unpackged wrapper %+v", wrapper)
+		mgollective.Logger().Tracef("unpackged wrapper %+v", wrapper)
 
-		var body MessageBody
+		var body mgollective.MessageBody
 		if err := goyaml.Unmarshal([]byte(wrapper.Body), &body); err != nil {
-			logger.Debug("YAML Unmarshal body", err)
+			mgollective.Logger().Debug("YAML Unmarshal body", err)
 			continue
 		}
 
-		message := Message{
-			topic:    msg.Channel,
-			reply_to: wrapper.Headers["reply-to"],
-			body:     body,
+		message := mgollective.Message{
+			Topic:    msg.Channel,
+			Reply_to: wrapper.Headers["reply-to"],
+			Body:     body,
 		}
 		parsed <- message
 	}
 }
 
-func makeRedisConnector(config *Config) Connector {
+func makeRedisConnector(config *mgollective.Config) mgollective.Connector {
 	host := config.GetStringDefault("connector", "host", "127.0.0.1")
 	port := config.GetStringDefault("connector", "port", "6379")
 	db := config.GetIntDefault("connector", "database", 1)
@@ -109,5 +110,5 @@ func makeRedisConnector(config *Config) Connector {
 }
 
 func init() {
-	registerConnector("redis", makeRedisConnector)
+	mgollective.RegisterConnector("redis", makeRedisConnector)
 }

@@ -35,10 +35,10 @@ func (d *DaemonCommand) Run() {
 	for {
 		message := <-ch
 		logger.Debugf("Recieved %+v", message)
-		if agent, exists := agentRegistry[message.body.Agent]; exists {
+		if agent, exists := agentRegistry[message.Body.Agent]; exists {
 			agent(config).Respond(message, connector)
 		} else {
-			logger.Debugf("No agent '%s'", message.body.Agent)
+			logger.Debugf("No agent '%s'", message.Body.Agent)
 		}
 	}
 }

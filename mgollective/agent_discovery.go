@@ -19,18 +19,18 @@ func (a *DiscoveryAgent) Respond(msg Message, connector Connector) {
 		return
 	}
 	var body string
-	if msg.body.Body == "ping" {
+	if msg.Body.Body == "ping" {
 		body = "pong"
 	} else {
-		body = "Unknown Request: " + msg.body.Body
+		body = "Unknown Request: " + msg.Body.Body
 	}
 
 	reply := Message{
-		target: msg.reply_to,
-		body: MessageBody{
-			Requestid:   msg.body.Requestid,
+		Target: msg.Reply_to,
+		Body: MessageBody{
+			Requestid:   msg.Body.Requestid,
 			Senderagent: "discovery",
-			Senderid:    a.config.senderid(),
+			Senderid:    a.config.Senderid(),
 			Msgtime:     time.Now().Unix(),
 			Body:        body,
 		},

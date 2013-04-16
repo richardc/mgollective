@@ -24,8 +24,8 @@ type MessageBody struct {
 }
 
 type Message struct {
-	target   string
-	topic    string
-	reply_to string
-	body     MessageBody
+	Target   string
+	Topic    string
+	Reply_to string
+	Body     MessageBody
 }

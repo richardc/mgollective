@@ -15,6 +15,10 @@ func init() {
 	DisableLog()
 }
 
+func Logger() seelog.LoggerInterface {
+	return logger
+}
+
 // DisableLog disables all library log output
 func DisableLog() {
 	logger = seelog.Disabled

@@ -37,7 +37,7 @@ func (*PingCommand) Run() {
 	Discover(connector, *config, func(message Message) {
 		ping := time.Since(start)
 		pings = append(pings, ping)
-		fmt.Printf("%-40s time=%s\n", message.body.Senderid, ping.String())
+		fmt.Printf("%-40s time=%s\n", message.Body.Senderid, ping.String())
 	})
 
 	var min, max, sum time.Duration

@@ -6,14 +6,14 @@ import (
 
 func Discover(connector Connector, config Config, callback func(Message)) {
 	discovery := Message{
-		target:   "mcollective::server::agents",
-		reply_to: config.identity(),
-		body: MessageBody{
+		Target:   "mcollective::server::agents",
+		Reply_to: config.Identity(),
+		Body: MessageBody{
 			Agent:      "discovery",
 			Body:       "ping",
 			Collective: "mcollective",
-			Callerid:   config.callerid(),
-			Senderid:   config.senderid(),
+			Callerid:   config.Callerid(),
+			Senderid:   config.Senderid(),
 			Ttl:        60,
 			Msgtime:    time.Now().Unix(),
 			Requestid:  "42",

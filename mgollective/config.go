@@ -19,24 +19,28 @@ func getconfig(file string, client bool) *Config {
 	return &Config{config: conf, client: client}
 }
 
-func (c *Config) collectives() []string {
+func (c *Config) Collectives() []string {
 	return []string{"mcollective"}
 }
 
-func (c *Config) classes() []string {
+func (c *Config) Classes() []string {
 	return []string{"mgollective"}
 }
 
-func (c *Config) identity() string {
+func (c *Config) Identity() string {
 	return "mcollective::agent::pies"
 }
 
-func (c *Config) callerid() string {
+func (c *Config) Callerid() string {
 	return "user=meat"
 }
 
-func (c *Config) senderid() string {
+func (c *Config) Senderid() string {
 	return "meat.example.com"
+}
+
+func (c *Config) IsClient() bool {
+	return c.client
 }
 
 func (c *Config) GetStringDefault(section, variable, def string) string {

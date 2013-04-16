@@ -1,6 +1,7 @@
-package mgollective
+package mgo_connector_redis
 
 import (
+	"github.com/richardc/mgollective/mgollective"
 	"github.com/simonz05/godis/redis"
 	. "launchpad.net/gocheck"
 	"testing"
@@ -16,7 +17,7 @@ var _ = Suite(&MySuite{})
 // Send a YAML document, test that it came back in the structures we expected
 func (s *MySuite) TestLoop(c *C) {
 	in := make(chan *redis.Message)
-	out := make(chan Message)
+	out := make(chan mgollective.Message)
 	connector := &RedisConnector{
 		subs: &redis.Sub{Messages: in},
 	}
@@ -54,10 +55,10 @@ func (s *MySuite) TestLoop(c *C) {
 	parsed := <-out
 	c.Logf("Parsed %#v", parsed)
 
-	c.Check(parsed.topic, Equals, "mcollective::server::agents")
-	c.Check(parsed.reply_to, Equals, "mcollective::reply::middleware.example.net::4004")
-	c.Check(parsed.body.Agent, Equals, "discovery")
-	c.Check(parsed.body.Senderid, Equals, "middleware.example.net")
-	c.Check(parsed.body.Collective, Equals, "mcollective")
-	c.Check(parsed.body.Callerid, Equals, "user=vagrant")
+	c.Check(parsed.Topic, Equals, "mcollective::server::agents")
+	c.Check(parsed.Reply_to, Equals, "mcollective::reply::middleware.example.net::4004")
+	c.Check(parsed.Body.Agent, Equals, "discovery")
+	c.Check(parsed.Body.Senderid, Equals, "middleware.example.net")
+	c.Check(parsed.Body.Collective, Equals, "mcollective")
+	c.Check(parsed.Body.Callerid, Equals, "user=vagrant")
 }

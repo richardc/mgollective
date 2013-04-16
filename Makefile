@@ -2,7 +2,7 @@ MGO_BIN=$(GOPATH)/bin/mgo
 
 all:	$(MGO_BIN)
 
-$(MGO_BIN): mgo/mgo.go *.go
+$(MGO_BIN): mgo/main.go *.go
 	cd mgo ; go install -v
 
 test:

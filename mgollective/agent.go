@@ -4,8 +4,10 @@ type Agent interface {
 	Respond(Message, Connector)
 }
 
-var agentRegistry = map[string]func(*Config) Agent{}
+type AgentFactory func(*Mgollective) Agent
 
-func registerAgent(name string, agent func(*Config) Agent) {
-	agentRegistry[name] = agent
+var agentRegistry = map[string]AgentFactory{}
+
+func registerAgent(name string, factory AgentFactory) {
+	agentRegistry[name] = factory
 }

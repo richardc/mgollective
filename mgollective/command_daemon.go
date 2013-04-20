@@ -1,7 +1,6 @@
 package mgollective
 
 import (
-	"fmt"
 	"github.com/maruel/subcommands"
 )
 
@@ -17,28 +16,17 @@ func init() {
 }
 
 func (d *DaemonCommand) Run(a subcommands.Application, args []string) int {
-	config := getconfig("mgo.conf", false)
-	connectorname := config.GetStringDefault("connector", "class", "redis")
-	var connector Connector
-	if factory, exists := connectorRegistry[connectorname]; exists {
-		connector = factory(config)
-	} else {
-		fmt.Printf("No connector called %s", connectorname)
-		return 1
-	}
-
-	connector.Connect()
-	connector.Subscribe()
+	mgo := NewFromConfigFile("mgo.conf", false)
 
 	ch := make(chan Message)
-	go connector.Loop(ch)
+	go mgo.Connector.Loop(ch)
 	for {
 		message := <-ch
-		logger.Debugf("Recieved %+v", message)
+		mgo.Debugf("Recieved %+v", message)
 		if agent, exists := agentRegistry[message.Body.Agent]; exists {
-			agent(config).Respond(message, connector)
+			agent(&mgo).Respond(message, mgo.Connector)
 		} else {
-			logger.Debugf("No agent '%s'", message.Body.Agent)
+			mgo.Debugf("No agent '%s'", message.Body.Agent)
 		}
 	}
 	return 0

@@ -5,17 +5,17 @@ import (
 )
 
 type DiscoveryAgent struct {
-	config *Config
+	app *Mgollective
 }
 
 func (a *DiscoveryAgent) matches(msg Message) bool {
 	return true
 }
 
-func (a *DiscoveryAgent) Respond(msg Message, connector Connector) {
-	logger.Infof("Discover agent handling %+v", msg)
-	if !a.matches(msg) {
-		logger.Debugf("Not for us")
+func (agent *DiscoveryAgent) Respond(msg Message, connector Connector) {
+	agent.app.Infof("Discover agent handling %+v", msg)
+	if !agent.matches(msg) {
+		agent.app.Debugf("Not for us")
 		return
 	}
 	var body string
@@ -30,7 +30,7 @@ func (a *DiscoveryAgent) Respond(msg Message, connector Connector) {
 		Body: MessageBody{
 			Requestid:   msg.Body.Requestid,
 			Senderagent: "discovery",
-			Senderid:    a.config.Senderid(),
+			Senderid:    agent.app.Senderid(),
 			Msgtime:     time.Now().Unix(),
 			Body:        body,
 		},
@@ -39,8 +39,8 @@ func (a *DiscoveryAgent) Respond(msg Message, connector Connector) {
 	connector.Publish(reply)
 }
 
-func makeDiscoveryAgent(c *Config) Agent {
-	return &DiscoveryAgent{config: c}
+func makeDiscoveryAgent(m *Mgollective) Agent {
+	return &DiscoveryAgent{app: m}
 }
 
 func init() {

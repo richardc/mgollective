@@ -19,22 +19,10 @@ func init() {
 
 func (*PingCommand) Run(a subcommands.Application, args []string) int {
 	start := time.Now()
-	config := getconfig("mgo.conf", true)
-	connectorname := config.GetStringDefault("connector", "class", "redis")
-	var connector Connector
-	if factory, exists := connectorRegistry[connectorname]; exists {
-		connector = factory(config)
-	} else {
-		fmt.Printf("No connector called %s", connectorname)
-		return 1
-	}
-
-	connector.Connect()
-	connector.Subscribe()
+	mgo := NewFromConfigFile("mgo.conf", true)
 
 	pings := make([]time.Duration, 0)
-	// Discover should be a method on *something*.  Probably want to refactor config
-	Discover(connector, *config, func(message Message) {
+	mgo.Discover(func(message Message) {
 		ping := time.Since(start)
 		pings = append(pings, ping)
 		fmt.Printf("%-40s time=%s\n", message.Body.Senderid, ping.String())

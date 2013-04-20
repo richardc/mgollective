@@ -7,8 +7,10 @@ type Connector interface {
 	Loop(chan Message)
 }
 
-var connectorRegistry = map[string]func(*Config) Connector{}
+type ConnectorFactory func(*Mgollective) Connector
 
-func RegisterConnector(name string, connector func(*Config) Connector) {
-	connectorRegistry[name] = connector
+var connectorRegistry = map[string]ConnectorFactory{}
+
+func RegisterConnector(name string, factory ConnectorFactory) {
+	connectorRegistry[name] = factory
 }

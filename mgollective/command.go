@@ -8,7 +8,7 @@ import (
 var commands []*subcommands.Command
 
 func RunApplication() {
-	defer FlushLog()
+	//defer FlushLog()
 	mgollective := &subcommands.DefaultApplication{
 		Name:     "mgo",
 		Title:    "mgollective",

@@ -1,25 +1,22 @@
 package mgollective
 
 import (
-	"fmt"
+	"github.com/maruel/subcommands"
 	"os"
 )
 
-type Command interface {
-	Run()
-}
+var commands []*subcommands.Command
 
-var commandRegistry = map[string]func() Command{}
-
-func registerCommand(name string, command func() Command) {
-	commandRegistry[name] = command
-}
-
-func RunCommand(name string) {
-	command, ok := commandRegistry[name]
-	if !ok {
-		fmt.Println("unrecognised command")
-		os.Exit(1)
+func RunApplication() {
+	defer FlushLog()
+	mgollective := &subcommands.DefaultApplication{
+		Name:     "mgo",
+		Title:    "mgollective",
+		Commands: append(commands, subcommands.CmdHelp),
 	}
-	command().Run()
+	subcommands.Run(mgollective, os.Args[1:])
+}
+
+func RegisterCommand(command *subcommands.Command) {
+	commands = append(commands, command)
 }

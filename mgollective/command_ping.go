@@ -2,22 +2,22 @@ package mgollective
 
 import (
 	"fmt"
-	"os"
+	"github.com/maruel/subcommands"
 	"time"
 )
 
 type PingCommand struct {
-}
-
-func makePingCommand() Command {
-	return &PingCommand{}
+	subcommands.CommandRunBase
 }
 
 func init() {
-	registerCommand("ping", makePingCommand)
+	RegisterCommand(&subcommands.Command{
+		UsageLine:  "ping",
+		CommandRun: func() subcommands.CommandRun { return &PingCommand{} },
+	})
 }
 
-func (*PingCommand) Run() {
+func (*PingCommand) Run(a subcommands.Application, args []string) int {
 	start := time.Now()
 	config := getconfig("mgo.conf", true)
 	connectorname := config.GetStringDefault("connector", "class", "redis")
@@ -26,7 +26,7 @@ func (*PingCommand) Run() {
 		connector = factory(config)
 	} else {
 		fmt.Printf("No connector called %s", connectorname)
-		os.Exit(1)
+		return 1
 	}
 
 	connector.Connect()
@@ -57,4 +57,5 @@ func (*PingCommand) Run() {
 	fmt.Println("--- ping statistics ---")
 	fmt.Printf("%d replies max: %s min: %s avg: %s\n",
 		len(pings), max.String(), min.String(), mean.String())
+	return 0
 }

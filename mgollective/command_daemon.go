@@ -2,21 +2,21 @@ package mgollective
 
 import (
 	"fmt"
-	"os"
+	"github.com/maruel/subcommands"
 )
 
 type DaemonCommand struct {
-}
-
-func makeDaemonCommand() Command {
-	return &DaemonCommand{}
+	subcommands.CommandRunBase
 }
 
 func init() {
-	registerCommand("daemon", makeDaemonCommand)
+	RegisterCommand(&subcommands.Command{
+		UsageLine:  "daemon",
+		CommandRun: func() subcommands.CommandRun { return &DaemonCommand{} },
+	})
 }
 
-func (d *DaemonCommand) Run() {
+func (d *DaemonCommand) Run(a subcommands.Application, args []string) int {
 	config := getconfig("mgo.conf", false)
 	connectorname := config.GetStringDefault("connector", "class", "redis")
 	var connector Connector
@@ -24,7 +24,7 @@ func (d *DaemonCommand) Run() {
 		connector = factory(config)
 	} else {
 		fmt.Printf("No connector called %s", connectorname)
-		os.Exit(1)
+		return 1
 	}
 
 	connector.Connect()
@@ -41,4 +41,5 @@ func (d *DaemonCommand) Run() {
 			logger.Debugf("No agent '%s'", message.Body.Agent)
 		}
 	}
+	return 0
 }

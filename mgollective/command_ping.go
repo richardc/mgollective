@@ -28,6 +28,11 @@ func (*PingCommand) Run(a subcommands.Application, args []string) int {
 		fmt.Printf("%-40s time=%s\n", message.Body.Senderid, ping.String())
 	})
 
+	if len(pings) == 0 {
+		fmt.Println("No responses.")
+		return 1
+	}
+
 	var min, max, sum time.Duration
 	min = pings[0]
 	for _, ping := range pings {

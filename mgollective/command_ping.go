@@ -19,7 +19,7 @@ func init() {
 
 func (*PingCommand) Run(a subcommands.Application, args []string) int {
 	start := time.Now()
-	mgo := NewFromConfigFile("mgo.conf", true)
+	mgo := NewClient()
 
 	pings := make([]time.Duration, 0)
 	mgo.Discover(func(message Message) {

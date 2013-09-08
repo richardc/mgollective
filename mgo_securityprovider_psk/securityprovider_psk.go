@@ -22,5 +22,6 @@ func makePskSecurityProvider(app *mgollective.Mgollective) mgollective.SecurityP
 }
 
 func init() {
+	mgollective.DeclareConfig("plugin.psk")
 	mgollective.RegisterSecurityProvider("psk", makePskSecurityProvider)
 }

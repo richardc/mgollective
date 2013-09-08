@@ -5,6 +5,7 @@ import (
 	"github.com/simonz05/godis/redis"
 	"launchpad.net/goyaml"
 	"regexp"
+	"strconv"
 )
 
 type RedisConnector struct {
@@ -98,10 +99,10 @@ func (r *RedisConnector) Loop(parsed chan mgollective.Message) {
 }
 
 func makeRedisConnector(app *mgollective.Mgollective) mgollective.Connector {
-	host := app.GetStringDefault("connector", "host", "127.0.0.1")
-	port := app.GetStringDefault("connector", "port", "6379")
-	db := app.GetIntDefault("connector", "database", 1)
-	password := app.GetStringDefault("connector", "password", "")
+	host := app.GetConfig("plugin.redis.host", "127.0.0.1")
+	port := app.GetConfig("plugin.redis.port", "6379")
+	db, _ := strconv.Atoi(app.GetConfig("plugin.redis.database", "1"))
+	password := app.GetConfig("plugin.redis.password", "")
 	client := redis.New("tcp:"+host+":"+port, db, password)
 	return &RedisConnector{
 		app:    app,

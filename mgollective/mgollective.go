@@ -5,31 +5,28 @@ package mgollective
 import (
 	"fmt"
 	"github.com/cihub/seelog"
-	"github.com/msbranco/goconfig"
-	"log"
 	"time"
 )
 
 type Mgollective struct {
 	Connector Connector
 	client    bool
-	config    goconfig.ConfigFile
+	config    map[string]string
 	logger    seelog.LoggerInterface
 }
 
-func NewFromConfigFile(file string, client bool) Mgollective {
-	conf, err := goconfig.ReadConfigFile(file)
-	if err != nil {
-		log.Fatal("Couldn't open config ", err)
-	}
+func NewClient() Mgollective {
+	return NewFromConfigFile("client.cfg", true)
+}
 
+func NewFromConfigFile(file string, client bool) Mgollective {
 	mgo := Mgollective{
 		logger: seelog.Disabled,
 		client: client,
-		config: *conf,
+		config: ParseConfig(file),
 	}
 
-	connectorname := mgo.GetStringDefault("connector", "class", "redis")
+	connectorname := mgo.GetConfig("connector", "redis")
 
 	if factory, exists := connectorRegistry[connectorname]; exists {
 		mgo.Connector = factory(&mgo)
@@ -44,22 +41,13 @@ func NewFromConfigFile(file string, client bool) Mgollective {
 	return mgo
 }
 
-func (m Mgollective) GetStringDefault(section, variable, def string) string {
-	value, err := m.config.GetString(section, variable)
-	if err != nil {
+func (m Mgollective) GetConfig(name, def string) string {
+	if value, ok := m.config[name]; ok {
+		return value
+	} else {
 		return def
 	}
-	return value
 }
-
-func (m Mgollective) GetIntDefault(section, variable string, def int) int {
-	value, err := m.config.GetInt64(section, variable)
-	if err != nil {
-		return def
-	}
-	return int(value)
-}
-
 func (m Mgollective) IsClient() bool {
 	return m.client
 }
@@ -149,4 +137,10 @@ func (m Mgollective) Discover(callback func(Message)) {
 			return
 		}
 	}
+}
+
+func init() {
+	DeclareConfig("main_collective")
+	DeclareConfig("securityprovider")
+	DeclareConfig("connector")
 }

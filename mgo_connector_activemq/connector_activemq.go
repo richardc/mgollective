@@ -15,8 +15,8 @@ type ActivemqConnector struct {
 }
 
 func (a *ActivemqConnector) Connect() {
-	host := a.app.GetStringDefault("connector", "host", "127.0.0.1")
-	port := a.app.GetStringDefault("connector", "port", "61613")
+	host := a.app.GetConfig("plugin.activemq.pool.1.host", "127.0.0.1")
+	port := a.app.GetConfig("plugin.activemq.pool.1.port", "61613")
 
 	connection, err := net.Dial("tcp", net.JoinHostPort(host, port))
 	if err != nil {
@@ -57,5 +57,13 @@ func makeActivemqConnector(app *mgollective.Mgollective) mgollective.Connector {
 }
 
 func init() {
+	mgollective.DeclareConfig("direct_addressing")
+	mgollective.DeclareConfig("plugin.activemq.base64")
+	mgollective.DeclareConfig("plugin.activemq.pool.size")
+	mgollective.DeclareConfig("plugin.activemq.pool.randomize")
+	mgollective.DeclareConfig("plugin.activemq.pool.*.host")
+	mgollective.DeclareConfig("plugin.activemq.pool.*.port")
+	mgollective.DeclareConfig("plugin.activemq.pool.*.user")
+	mgollective.DeclareConfig("plugin.activemq.pool.*.password")
 	mgollective.RegisterConnector("activemq", makeActivemqConnector)
 }

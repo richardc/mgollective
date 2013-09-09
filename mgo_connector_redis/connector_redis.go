@@ -23,6 +23,10 @@ func (r *RedisConnector) Connect() {
 	// for this connector it's a noop
 }
 
+func (r *RedisConnector) Disconnect() {
+	// for this connector it's a noop
+}
+
 func (r *RedisConnector) Subscribe() {
 	var channels []string
 	if !r.app.IsClient() {
@@ -41,6 +45,10 @@ func (r *RedisConnector) Subscribe() {
 		panic(err)
 	}
 	r.subs = sub
+}
+
+func (r *RedisConnector) Unsubscribe() {
+	// for this connector it's a noop
 }
 
 func (r *RedisConnector) Publish(msg mgollective.Message) {

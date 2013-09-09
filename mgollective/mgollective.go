@@ -41,6 +41,11 @@ func NewFromConfigFile(file string, client bool) Mgollective {
 	return mgo
 }
 
+func (m Mgollective) Shutdown() {
+	m.Connector.Unsubscribe()
+	m.Connector.Disconnect()
+}
+
 func (m Mgollective) GetConfig(name, def string) string {
 	if value, ok := m.config[name]; ok {
 		return value

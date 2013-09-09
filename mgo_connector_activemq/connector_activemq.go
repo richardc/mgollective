@@ -7,11 +7,14 @@ import (
 	"github.com/richardc/mgollective/mgollective"
 	"log"
 	"net"
+	"os"
 )
 
 type ActivemqConnector struct {
-	app    *mgollective.Mgollective
-	client *stompngo.Connection
+	app      *mgollective.Mgollective
+	client   *stompngo.Connection
+	reply_to string
+	channels map[string]<-chan stompngo.MessageData
 }
 
 func (a *ActivemqConnector) Connect() {
@@ -22,10 +25,10 @@ func (a *ActivemqConnector) Connect() {
 	if err != nil {
 		log.Fatalln(err) // Handle this ......
 	}
-	fmt.Println("connected ...")
+	log.Println("connected ...")
 
-	if false {
-		// do TLS setup
+	if a.app.GetConfig("plugin.activemq.pool.1.ssl", "0") == "1" {
+		log.Println("starting TLS")
 		tlsConfig := new(tls.Config)
 		tlsConfig.InsecureSkipVerify = true // Do *not* check the server's certificate
 		tls_conn := tls.Client(connection, tlsConfig)
@@ -36,18 +39,67 @@ func (a *ActivemqConnector) Connect() {
 		connection = tls_conn
 	}
 
-	connection_headers := stompngo.Headers{"accept-version", "1.1"}
+	connection_headers := stompngo.Headers{
+		"login", a.app.GetConfig("plugin.activemq.pool.1.user", ""),
+		"passcode", a.app.GetConfig("plugin.activemq.pool.1.password", ""),
+	}
+
 	client, err := stompngo.Connect(connection, connection_headers)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	a.client = client
 }
 
+func (a *ActivemqConnector) Disconnect() {
+	log.Println("disconnecting")
+	eh := stompngo.Headers{}
+	e := a.client.Disconnect(eh)
+	if e != nil {
+		log.Fatalln(e)
+	}
+}
+
 func (a *ActivemqConnector) Subscribe() {
+	log.Println("subscribing to channels")
+	if a.app.IsClient() {
+		a.reply_to = fmt.Sprintf("/queue/%s.reply.%s_%d", a.app.Collective(), a.app.Senderid(), os.Getpid())
+		log.Println("subscribing to '" + a.reply_to + "'")
+		sub := stompngo.Headers{
+			"destination", a.reply_to,
+		}
+		channel, err := a.client.Subscribe(sub)
+		if err != nil {
+			log.Fatalln(sub)
+		}
+		a.channels = make(map[string]<-chan stompngo.MessageData)
+		a.channels["reply"] = channel
+	} else {
+		log.Fatalln("server connections not yet supported")
+	}
+}
+
+func (a *ActivemqConnector) Unsubscribe() {
+	log.Println("unsubscribing from channels")
+	if a.app.IsClient() {
+		log.Println("Unsubscribing from '" + a.reply_to + "'")
+		sub := stompngo.Headers{
+			"destination", a.reply_to,
+		}
+		err := a.client.Unsubscribe(sub)
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}
 }
 
 func (a *ActivemqConnector) Publish(msg mgollective.Message) {
+	log.Println("publishing message", msg)
+
 }
 
 func (a *ActivemqConnector) Loop(parsed chan mgollective.Message) {
+	log.Println("entering recieve loop")
 }
 
 func makeActivemqConnector(app *mgollective.Mgollective) mgollective.Connector {

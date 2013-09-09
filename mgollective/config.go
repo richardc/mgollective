@@ -22,7 +22,6 @@ func ParseConfig(file string) map[string]string {
 	}
 	scanner := bufio.NewScanner(fh)
 	for scanner.Scan() {
-		log.Println("Parsing: " + scanner.Text())
 		fields := strings.Fields(scanner.Text())
 		if len(fields) == 0 {
 			continue

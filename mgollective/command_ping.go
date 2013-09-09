@@ -27,6 +27,7 @@ func (*PingCommand) Run(a subcommands.Application, args []string) int {
 		pings = append(pings, ping)
 		fmt.Printf("%-40s time=%s\n", message.Body.Senderid, ping.String())
 	})
+	defer mgo.Shutdown()
 
 	if len(pings) == 0 {
 		fmt.Println("No responses.")
@@ -50,5 +51,6 @@ func (*PingCommand) Run(a subcommands.Application, args []string) int {
 	fmt.Println("--- ping statistics ---")
 	fmt.Printf("%d replies max: %s min: %s avg: %s\n",
 		len(pings), max.String(), min.String(), mean.String())
+
 	return 0
 }

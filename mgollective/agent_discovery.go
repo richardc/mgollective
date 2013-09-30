@@ -37,7 +37,8 @@ func (agent *DiscoveryAgent) Respond(msg Message, connector Connector) {
 		},
 	}
 
-	connector.Publish(reply)
+	glog.Info(reply)
+	// connector.Publish(reply)
 }
 
 func makeDiscoveryAgent(m *Mgollective) Agent {

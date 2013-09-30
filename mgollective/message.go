@@ -29,3 +29,23 @@ type Message struct {
 	Reply_to string
 	Body     MessageBody
 }
+
+/////////////////
+// New messages
+/////////////////
+
+type WireMessage struct {
+	Headers map[string]string
+	Body    []byte
+}
+
+type RequestMessage struct {
+}
+
+type ResponseMessage struct {
+	Target   string
+	Headers  map[string]string
+	Topic    string
+	Reply_to string
+	Body     map[string]interface{}
+}

@@ -99,12 +99,24 @@ func (a *ActivemqConnector) Unsubscribe() {
 	}
 }
 
-func (a *ActivemqConnector) Publish(msg mgollective.Message) {
-	glog.Info("publishing message", msg)
-
+func (c *ActivemqConnector) Publish(queue string, destinations []string, msg mgollective.WireMessage) {
+	for _, destination := range destinations {
+		headers := stompngo.Headers{
+			"destination", queue,
+			"mc_identity", destination,
+		}
+		for k, v := range msg.Headers {
+			headers = headers.Add(k, v)
+		}
+		glog.Infof("publishing message on %s with headers %v", queue, headers)
+		err := c.client.Send(headers, string(msg.Body))
+		if err != nil {
+			glog.Fatalln(err)
+		}
+	}
 }
 
-func (a *ActivemqConnector) Loop(parsed chan mgollective.Message) {
+func (a *ActivemqConnector) RecieveLoop(parsed chan mgollective.WireMessage) {
 	glog.Info("entering recieve loop")
 }
 

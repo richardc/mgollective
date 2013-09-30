@@ -20,7 +20,7 @@ func (d *DaemonCommand) Run(a subcommands.Application, args []string) int {
 	mgo := NewFromConfigFile("server.cfg", false)
 
 	ch := make(chan Message)
-	go mgo.Connector.Loop(ch)
+	// go mgo.Connector.Loop(ch)
 	for {
 		message := <-ch
 		glog.Infof("Recieved %+v", message)

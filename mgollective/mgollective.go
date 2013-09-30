@@ -8,9 +8,11 @@ import (
 )
 
 type Mgollective struct {
-	Connector Connector
-	client    bool
-	config    map[string]string
+	Connector        Connector
+	Encoder          Encoder
+	SecurityProvider SecurityProvider
+	client           bool
+	config           map[string]string
 }
 
 func NewClient() Mgollective {
@@ -28,8 +30,13 @@ func NewFromConfigFile(file string, client bool) Mgollective {
 	if factory, exists := connectorRegistry[connectorname]; exists {
 		mgo.Connector = factory(&mgo)
 	} else {
-		glog.Errorf("No connector called %s", connectorname)
-		panic("panic")
+		glog.Fatalf("No connector called %s", connectorname)
+	}
+
+	if factory, exists := encoderRegistry["json"]; exists {
+		mgo.Encoder = factory(&mgo)
+	} else {
+		glog.Fatalf("No encoder called %s", "json")
 	}
 
 	mgo.Connector.Connect()
@@ -95,8 +102,9 @@ func (m Mgollective) Discover(callback func(Message)) {
 	}
 
 	cb := make(chan Message)
-	go m.Connector.Loop(cb)
-	m.Connector.Publish(discovery)
+	//go m.Connector.RecieveLoop(cb)
+	glog.Info(discovery)
+	//m.Connector.Publish(discovery)
 
 	for {
 		select {
@@ -111,6 +119,17 @@ func (m Mgollective) Discover(callback func(Message)) {
 func (m Mgollective) RpcCommand(agent, command string, params map[string]string, callback func(ResponseMessage)) {
 	glog.Info("sending RpcCommand")
 	responses := make(chan ResponseMessage)
+
+	req := map[string]string{"foo": "bar"}
+
+	msg := WireMessage{
+		Headers: map[string]string{"foo": "bar"},
+		Body:    m.Encoder.Encode(req),
+	}
+
+	destination := []string{"foo"}
+
+	m.Connector.Publish("/queue/mcollective.nodes", destination, msg)
 
 	for {
 		select {

@@ -5,8 +5,8 @@ type Connector interface {
 	Subscribe()
 	Unsubscribe()
 	Disconnect()
-	Publish(Message)
-	Loop(chan Message)
+	Publish(queue string, destinations []string, message WireMessage)
+	RecieveLoop(chan WireMessage)
 }
 
 type ConnectorFactory func(*Mgollective) Connector

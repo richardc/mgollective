@@ -19,15 +19,17 @@ func init() {
 func (d *DaemonCommand) Run(a subcommands.Application, args []string) int {
 	mgo := NewFromConfigFile("server.cfg", false)
 
-	ch := make(chan Message)
-	// go mgo.Connector.Loop(ch)
+	ch := make(chan WireMessage)
+	go mgo.Connector.RecieveLoop(ch)
 	for {
 		message := <-ch
 		glog.Infof("Recieved %+v", message)
-		if agent, exists := agentRegistry[message.Body.Agent]; exists {
-			agent(&mgo).Respond(message, mgo.Connector)
+		if agent, exists := agentRegistry[message.Headers["agent"]]; exists {
+			//agent(&mgo).Respond(message, mgo.Connector)
+			//agent(&mgo).Name
+			glog.Info(message, agent)
 		} else {
-			glog.Infof("No agent '%s'", message.Body.Agent)
+			glog.Infof("No agent '%s'", message.Headers["agent"])
 		}
 	}
 	return 0

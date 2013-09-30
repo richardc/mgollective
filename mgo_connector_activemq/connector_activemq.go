@@ -11,10 +11,8 @@ import (
 )
 
 type ActivemqConnector struct {
-	app      *mgollective.Mgollective
-	client   *stompngo.Connection
-	reply_to string
-	channels map[string]<-chan stompngo.MessageData
+	app    *mgollective.Mgollective
+	client *stompngo.Connection
 }
 
 func (a *ActivemqConnector) Connect() {
@@ -66,36 +64,51 @@ func (a *ActivemqConnector) Disconnect() {
 	}
 }
 
-func (a *ActivemqConnector) Subscribe() {
+func (c *ActivemqConnector) Subscribe() {
 	glog.Info("subscribing to channels")
-	if a.app.IsClient() {
-		a.reply_to = fmt.Sprintf("/queue/%s.reply.%s_%d", a.app.Collective(), a.app.Senderid(), os.Getpid())
-		glog.Info("subscribing to '" + a.reply_to + "'")
-		sub := stompngo.Headers{
-			"destination", a.reply_to,
-		}
-		channel, err := a.client.Subscribe(sub)
-		if err != nil {
-			glog.Fatal(sub)
-		}
-		a.channels = make(map[string]<-chan stompngo.MessageData)
-		a.channels["reply"] = channel
+
+	var queue string
+	if c.app.IsClient() {
+		queue = fmt.Sprintf("/queue/%s.reply.%s_%d", c.app.Collective(), c.app.Senderid(), os.Getpid())
 	} else {
-		glog.Fatal("server connections not yet supported")
+		queue = fmt.Sprintf("/queue/%s.nodes", c.app.Collective())
+	}
+
+	sub := stompngo.Headers{
+		"destination", queue,
+	}
+	glog.Info("subscribing with headers %v", sub)
+	channel, err := c.client.Subscribe(sub)
+	if err != nil {
+		glog.Fatal(sub)
+	}
+	go c.recieve(channel)
+}
+
+func (c *ActivemqConnector) recieve(channel <-chan stompngo.MessageData) {
+	for {
+		message := <-channel
+		glog.Infof("Recieved %+v", message)
 	}
 }
 
-func (a *ActivemqConnector) Unsubscribe() {
+func (c *ActivemqConnector) Unsubscribe() {
 	glog.Info("unsubscribing from channels")
-	if a.app.IsClient() {
-		glog.Info("Unsubscribing from '" + a.reply_to + "'")
-		sub := stompngo.Headers{
-			"destination", a.reply_to,
-		}
-		err := a.client.Unsubscribe(sub)
-		if err != nil {
-			glog.Fatal(err)
-		}
+	var queue string
+	if c.app.IsClient() {
+		queue = fmt.Sprintf("/queue/%s.reply.%s_%d", c.app.Collective(), c.app.Senderid(), os.Getpid())
+	} else {
+		queue = fmt.Sprintf("/queue/%s.nodes", c.app.Collective())
+	}
+
+	sub := stompngo.Headers{
+		"destination", queue,
+	}
+	glog.Info("Unsubscribing from %v", sub)
+
+	err := c.client.Unsubscribe(sub)
+	if err != nil {
+		glog.Fatal(err)
 	}
 }
 
@@ -118,6 +131,7 @@ func (c *ActivemqConnector) Publish(queue string, destinations []string, msg mgo
 
 func (a *ActivemqConnector) RecieveLoop(parsed chan mgollective.WireMessage) {
 	glog.Info("entering recieve loop")
+
 }
 
 func makeActivemqConnector(app *mgollective.Mgollective) mgollective.Connector {

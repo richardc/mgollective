@@ -131,10 +131,16 @@ func (m Mgollective) RpcCommand(agent, command string, params map[string]string,
 
 	m.Connector.Publish("/queue/mcollective.nodes", destination, msg)
 
+	response_count := 0
 	for {
 		select {
 		case message := <-responses:
 			callback(message)
+			response_count++
+			if response_count >= len(destination) {
+				glog.Info("got responses, quitting")
+				return
+			}
 		case <-time.After(10 * time.Second):
 			glog.Info("timing out")
 			return

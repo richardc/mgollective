@@ -22,10 +22,10 @@ func (*RpcCommand) Run(a subcommands.Application, args []string) int {
 	command := "ping"
 	params := make(map[string]string)
 
+	defer mgo.Shutdown()
 	mgo.RpcCommand(agent, command, params, func(message ResponseMessage) {
 		fmt.Printf("%-40s %s\n", message.Headers["mc_identity"], message.Body["timestamp"])
 	})
-	defer mgo.Shutdown()
 
 	return 0
 }

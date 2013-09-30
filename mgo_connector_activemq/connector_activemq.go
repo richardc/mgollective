@@ -12,13 +12,14 @@ import (
 
 type ActivemqConnector struct {
 	app           *mgollective.Mgollective
+	socket        net.Conn
 	client        *stompngo.Connection
 	internal_chan chan mgollective.WireMessage
 }
 
-func (a *ActivemqConnector) Connect() {
-	host := a.app.GetConfig("plugin.activemq.pool.1.host", "127.0.0.1")
-	port := a.app.GetConfig("plugin.activemq.pool.1.port", "61613")
+func (c *ActivemqConnector) Connect() {
+	host := c.app.GetConfig("plugin.activemq.pool.1.host", "127.0.0.1")
+	port := c.app.GetConfig("plugin.activemq.pool.1.port", "61613")
 	glog.Info("connecting to activemq", host, port)
 
 	connection, err := net.Dial("tcp", net.JoinHostPort(host, port))
@@ -26,8 +27,9 @@ func (a *ActivemqConnector) Connect() {
 		glog.Fatal(err) // Handle this ......
 	}
 	glog.Info("connected ...")
+	c.socket = connection
 
-	if a.app.GetConfig("plugin.activemq.pool.1.ssl", "0") == "1" {
+	if c.app.GetConfig("plugin.activemq.pool.1.ssl", "0") == "1" {
 		glog.Info("starting TLS")
 		tlsConfig := new(tls.Config)
 		tlsConfig.InsecureSkipVerify = true // Do *not* check the server's certificate
@@ -40,10 +42,10 @@ func (a *ActivemqConnector) Connect() {
 		glog.Info("TLS configured")
 	}
 
-	user := a.app.GetConfig("plugin.activemq.pool.1.user", "")
+	user := c.app.GetConfig("plugin.activemq.pool.1.user", "")
 	connection_headers := stompngo.Headers{
 		"login", user,
-		"passcode", a.app.GetConfig("plugin.activemq.pool.1.password", ""),
+		"passcode", c.app.GetConfig("plugin.activemq.pool.1.password", ""),
 	}
 
 	glog.Info("logging in as ", user)
@@ -53,16 +55,23 @@ func (a *ActivemqConnector) Connect() {
 	}
 	glog.Info("logged in")
 
-	a.client = client
+	c.client = client
 }
 
-func (a *ActivemqConnector) Disconnect() {
+func (c *ActivemqConnector) Disconnect() {
 	glog.Info("disconnecting")
 	eh := stompngo.Headers{}
-	e := a.client.Disconnect(eh)
+	e := c.client.Disconnect(eh)
 	if e != nil {
 		glog.Fatal(e)
 	}
+
+	glog.Info("closing socket")
+	e = c.socket.Close()
+	if e != nil {
+		glog.Fatal(e)
+	}
+	glog.Info("socket closed")
 }
 
 func (c *ActivemqConnector) Subscribe() {
@@ -90,9 +99,8 @@ func (c *ActivemqConnector) Subscribe() {
 // mgollective.WireMessage and passes it on to the internal channel
 // that we recieve on
 func (c *ActivemqConnector) recieve(channel <-chan stompngo.MessageData) {
-	for {
-		messagedata := <-channel
-		glog.Infof("Recieved %+v", messagedata)
+	for messagedata := range channel {
+		glog.Infof("STOMP recieved %+v", messagedata)
 		headers := make(map[string]string)
 		for i, key := range messagedata.Message.Headers {
 			if i%2 == 0 {
@@ -103,7 +111,6 @@ func (c *ActivemqConnector) recieve(channel <-chan stompngo.MessageData) {
 			Headers: headers,
 			Body:    messagedata.Message.Body,
 		}
-
 		c.internal_chan <- wire
 	}
 }

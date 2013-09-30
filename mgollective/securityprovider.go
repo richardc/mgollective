@@ -1,8 +1,8 @@
 package mgollective
 
 type SecurityProvider interface {
-	Sign(*Message)
-	Verify(Message) bool
+	Sign([]byte) map[string]string
+	Verify([]byte, map[string]string) bool
 }
 
 type SecurityProviderFactory func(*Mgollective) SecurityProvider

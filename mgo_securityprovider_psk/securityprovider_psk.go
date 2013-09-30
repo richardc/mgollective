@@ -8,16 +8,22 @@ type PskSecurityProvider struct {
 	psk string
 }
 
-func (p PskSecurityProvider) Sign(message *mgollective.Message) {
+func (p PskSecurityProvider) Sign(message []byte) map[string]string {
+	headers := make(map[string]string)
+	headers["signature"] = p.psk
+	return headers
 }
 
-func (p PskSecurityProvider) Verify(message mgollective.Message) bool {
-	return true
+func (p PskSecurityProvider) Verify(message []byte, headers map[string]string) bool {
+	if headers["signature"] == p.psk {
+		return true
+	}
+	return false
 }
 
 func makePskSecurityProvider(app *mgollective.Mgollective) mgollective.SecurityProvider {
 	return &PskSecurityProvider{
-		psk: "pies",
+		psk: app.GetConfig("plugin.psk", ""),
 	}
 }
 

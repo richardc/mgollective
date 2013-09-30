@@ -92,24 +92,16 @@ func (m Mgollective) Senderid() string {
 	return "meat.example.com"
 }
 
-func (m Mgollective) Discover(callback func(Message)) {
-	discovery := Message{
-		Target:   m.Collective() + "::server::agents",
-		Reply_to: m.Identity(),
-		Body: MessageBody{
-			Agent:      "discovery",
-			Body:       "ping",
-			Collective: "mcollective",
-			Callerid:   m.Callerid(),
-			Senderid:   m.Senderid(),
-			Ttl:        60,
-			Msgtime:    time.Now().Unix(),
-			Requestid:  "42",
+func (m Mgollective) Discover(callback func(ResponseMessage)) {
+	discovery := RequestMessage{
+		Body: RequestBody{
+			Agent:  "discovery",
+			Action: "ping",
 		},
 	}
 
-	cb := make(chan Message)
-	//go m.Connector.RecieveLoop(cb)
+	cb := make(chan ResponseMessage)
+	//	go m.Connector.RecieveLoop(cb)
 	glog.Info(discovery)
 	//m.Connector.Publish(discovery)
 
@@ -154,16 +146,14 @@ func (m Mgollective) verifyMessage(message WireMessage) bool {
 	return m.SecurityProvider.Verify(message.Body, message.Headers)
 }
 
-func (m Mgollective) RpcCommand(request RequestMessage, callback func(ResponseMessage)) {
-	glog.Info("sending RpcCommand")
+func (m Mgollective) RpcCommand(request RequestMessage, discovered_nodes []string, callback func(ResponseMessage)) {
+	glog.Info("sending RpcCommand %v", request)
 	responses := make(chan ResponseMessage)
 	msg := m.encodeRequest(request)
 
 	m.signMessage(&msg)
 
-	destination := []string{"foo"}
-
-	m.Connector.Publish("/queue/mcollective.nodes", destination, msg)
+	go m.Connector.Publish("/queue/mcollective.nodes", discovered_nodes, msg)
 
 	response_count := 0
 	for {
@@ -171,7 +161,7 @@ func (m Mgollective) RpcCommand(request RequestMessage, callback func(ResponseMe
 		case message := <-responses:
 			callback(message)
 			response_count++
-			if response_count >= len(destination) {
+			if response_count >= len(discovered_nodes) {
 				glog.Info("got responses, quitting")
 				return
 			}

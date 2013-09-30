@@ -21,14 +21,16 @@ func (*RpcCommand) Run(a subcommands.Application, args []string) int {
 
 	request := RequestMessage{
 		Body: RequestBody{
-			Agent:  "rpcutil",
-			Action: "ping",
+			Agent:  args[0],
+			Action: args[1],
 			Params: make(map[string]string),
 		},
 	}
 
+	discovered_nodes := []string{"foo"}
+
 	defer mgo.Shutdown()
-	mgo.RpcCommand(request, func(message ResponseMessage) {
+	mgo.RpcCommand(request, discovered_nodes, func(message ResponseMessage) {
 		fmt.Printf("%-40s %s\n", message.Headers["mc_identity"], message.Body["timestamp"])
 	})
 

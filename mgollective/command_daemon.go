@@ -33,11 +33,11 @@ func (c *DaemonCommand) Run(a subcommands.Application, args []string) int {
 					glog.Infof("No response from agent %s", agentname)
 				} else {
 					glog.Infof("Sending response %v", response)
+					/// XXX actually send a response
 				}
 			} else {
 				glog.Infof("No agent '%s'", agentname)
 			}
-
 		} else {
 			glog.Info("Message failed verification")
 		}

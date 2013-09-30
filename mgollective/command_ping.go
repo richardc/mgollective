@@ -22,10 +22,10 @@ func (*PingCommand) Run(a subcommands.Application, args []string) int {
 	mgo := NewClient()
 
 	pings := make([]time.Duration, 0)
-	mgo.Discover(func(message Message) {
+	mgo.Discover(func(message ResponseMessage) {
 		ping := time.Since(start)
 		pings = append(pings, ping)
-		fmt.Printf("%-40s time=%s\n", message.Body.Senderid, ping.String())
+		fmt.Printf("%-40s time=%s\n", message.Headers["sender-id"], ping.String())
 	})
 	defer mgo.Shutdown()
 

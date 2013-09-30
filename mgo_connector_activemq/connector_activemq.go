@@ -138,7 +138,6 @@ func (c *ActivemqConnector) Unsubscribe() {
 
 func (c *ActivemqConnector) Publish(queue string, destinations []string, msg mgollective.WireMessage) {
 	for _, destination := range destinations {
-
 		// convert down to milliseconds and add 60,000
 		expires := time.Now().UnixNano()/1000000 + 60000
 		headers := stompngo.Headers{

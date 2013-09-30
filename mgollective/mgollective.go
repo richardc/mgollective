@@ -145,7 +145,17 @@ func (m Mgollective) Discover(callback func(Message)) {
 }
 
 func (m Mgollective) RpcCommand(agent, command string, params map[string]string, callback func(ResponseMessage)) {
+	responses := make(chan ResponseMessage)
 
+	for {
+		select {
+		case message := <-responses:
+			callback(message)
+		case <-time.After(10 * time.Second):
+			m.Info("timing out")
+			return
+		}
+	}
 }
 
 func init() {

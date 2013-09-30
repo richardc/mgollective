@@ -123,27 +123,43 @@ func (m Mgollective) Discover(callback func(Message)) {
 	}
 }
 
-func (m Mgollective) RpcCommand(agent, command string, params map[string]string, callback func(ResponseMessage)) {
-	glog.Info("sending RpcCommand")
-	responses := make(chan ResponseMessage)
-
-	req := map[string]string{"foo": "bar"}
-
+func (m Mgollective) encodeRequest(message RequestMessage) WireMessage {
 	msg := WireMessage{
 		Headers: map[string]string{
 			"protocol_version": "2",
 			"encoding":         m.Encoder.Name(),
-			"accepts_encoding": AcceptedEncodings(),
+			"accepts_encoding": m.Encoder.Name(), // XXX should be lookup
 			"requestid":        "blarb",
 		},
-		Body: m.Encoder.Encode(req),
+		Body: m.Encoder.EncodeRequest(message),
 	}
+	return msg
+}
 
-	signature := m.SecurityProvider.Sign(msg.Body)
-	glog.Info("signed %v", signature)
+func (m Mgollective) decodeRequest(message WireMessage) RequestMessage {
+	/// XXX select encoder
+	msg := m.Encoder.DecodeRequest(message.Body)
+	glog.Infof("Decoded to %v", msg)
+	return msg
+}
+
+func (m Mgollective) signMessage(message *WireMessage) {
+	signature := m.SecurityProvider.Sign(message.Body)
 	for k, v := range signature {
-		msg.Headers[k] = v
+		message.Headers[k] = v
 	}
+}
+
+func (m Mgollective) verifyMessage(message WireMessage) bool {
+	return m.SecurityProvider.Verify(message.Body, message.Headers)
+}
+
+func (m Mgollective) RpcCommand(request RequestMessage, callback func(ResponseMessage)) {
+	glog.Info("sending RpcCommand")
+	responses := make(chan ResponseMessage)
+	msg := m.encodeRequest(request)
+
+	m.signMessage(&msg)
 
 	destination := []string{"foo"}
 

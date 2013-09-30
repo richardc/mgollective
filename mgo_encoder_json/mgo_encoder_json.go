@@ -16,15 +16,15 @@ func (e JsonEncoder) Order() int {
 	return 5
 }
 
-func (e JsonEncoder) Encode(message map[string]string) []byte {
+func (e JsonEncoder) EncodeRequest(message mgollective.RequestMessage) []byte {
 	bytes, _ := json.Marshal(message)
 	return bytes
 }
 
-func (e JsonEncoder) Decode(bytes []byte) map[string]string {
-	message := make(map[string]string)
+func (e JsonEncoder) DecodeRequest(bytes []byte) mgollective.RequestMessage {
+	message := &mgollective.RequestMessage{}
 	json.Unmarshal(bytes, message)
-	return message
+	return *message
 }
 
 func makeJsonEncoder(app *mgollective.Mgollective) mgollective.Encoder {

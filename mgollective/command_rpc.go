@@ -18,12 +18,17 @@ func init() {
 
 func (*RpcCommand) Run(a subcommands.Application, args []string) int {
 	mgo := NewClient()
-	agent := "rpcutil"
-	command := "ping"
-	params := make(map[string]string)
+
+	request := RequestMessage{
+		Body: RequestBody{
+			Agent:  "rpcutil",
+			Action: "ping",
+			Params: make(map[string]string),
+		},
+	}
 
 	defer mgo.Shutdown()
-	mgo.RpcCommand(agent, command, params, func(message ResponseMessage) {
+	mgo.RpcCommand(request, func(message ResponseMessage) {
 		fmt.Printf("%-40s %s\n", message.Headers["mc_identity"], message.Body["timestamp"])
 	})
 

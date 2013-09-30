@@ -16,7 +16,7 @@ func init() {
 	})
 }
 
-func (d *DaemonCommand) Run(a subcommands.Application, args []string) int {
+func (c *DaemonCommand) Run(a subcommands.Application, args []string) int {
 	mgo := NewFromConfigFile("server.cfg", false)
 
 	ch := make(chan WireMessage)
@@ -24,13 +24,24 @@ func (d *DaemonCommand) Run(a subcommands.Application, args []string) int {
 	for {
 		message := <-ch
 		glog.Infof("Recieved %+v", message)
-		if agent, exists := agentRegistry[message.Headers["agent"]]; exists {
-			//agent(&mgo).Respond(message, mgo.Connector)
-			//agent(&mgo).Name
-			glog.Info(message, agent)
+		if mgo.verifyMessage(message) {
+			request := mgo.decodeRequest(message)
+			agentname := request.Body.Agent
+			if agent, exists := agentRegistry[agentname]; exists {
+				response := agent(&mgo).Respond(request)
+				if response == nil {
+					glog.Infof("No response from agent %s", agentname)
+				} else {
+					glog.Infof("Sending response %v", response)
+				}
+			} else {
+				glog.Infof("No agent '%s'", agentname)
+			}
+
 		} else {
-			glog.Infof("No agent '%s'", message.Headers["agent"])
+			glog.Info("Message failed verification")
 		}
+
 	}
 	return 0
 }

@@ -1,7 +1,7 @@
 package mgollective
 
 type Agent interface {
-	Respond(Message, Connector)
+	Respond(RequestMessage) *ResponseMessage
 }
 
 type AgentFactory func(*Mgollective) Agent

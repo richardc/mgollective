@@ -8,6 +8,7 @@ import (
 	"github.com/richardc/mgollective/mgollective"
 	"net"
 	"os"
+	"time"
 )
 
 type ActivemqConnector struct {
@@ -137,9 +138,13 @@ func (c *ActivemqConnector) Unsubscribe() {
 
 func (c *ActivemqConnector) Publish(queue string, destinations []string, msg mgollective.WireMessage) {
 	for _, destination := range destinations {
+
+		// convert down to milliseconds and add 60,000
+		expires := time.Now().UnixNano()/1000000 + 60000
 		headers := stompngo.Headers{
 			"destination", queue,
 			"mc_identity", destination,
+			"expires", fmt.Sprintf("%d", expires),
 		}
 		for k, v := range msg.Headers {
 			headers = headers.Add(k, v)

@@ -20,6 +20,7 @@ type ActivemqConnector struct {
 func (a *ActivemqConnector) Connect() {
 	host := a.app.GetConfig("plugin.activemq.pool.1.host", "127.0.0.1")
 	port := a.app.GetConfig("plugin.activemq.pool.1.port", "61613")
+	log.Println("connecting to activemq", host, port)
 
 	connection, err := net.Dial("tcp", net.JoinHostPort(host, port))
 	if err != nil {
@@ -37,17 +38,22 @@ func (a *ActivemqConnector) Connect() {
 			log.Fatalln(err)
 		}
 		connection = tls_conn
+		log.Println("TLS configured")
 	}
 
+	user := a.app.GetConfig("plugin.activemq.pool.1.user", "")
 	connection_headers := stompngo.Headers{
-		"login", a.app.GetConfig("plugin.activemq.pool.1.user", ""),
+		"login", user,
 		"passcode", a.app.GetConfig("plugin.activemq.pool.1.password", ""),
 	}
 
+	log.Println("logging in as ", user)
 	client, err := stompngo.Connect(connection, connection_headers)
 	if err != nil {
 		log.Fatalln(err)
 	}
+	log.Println("logged in")
+
 	a.client = client
 }
 

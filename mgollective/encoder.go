@@ -14,3 +14,7 @@ var encoderRegistry = map[string]EncoderFactory{}
 func RegisterEncoder(name string, factory EncoderFactory) {
 	encoderRegistry[name] = factory
 }
+
+func AcceptedEncodings() string {
+	return "json"
+}

@@ -10,6 +10,7 @@ var commands []*subcommands.Command
 
 func RunApplication() {
 	flag.Set("logtostderr", "true")
+	flag.Set("stderrthreshold", "0")
 	mgollective := &subcommands.DefaultApplication{
 		Name:     "mgo",
 		Title:    "mgollective",

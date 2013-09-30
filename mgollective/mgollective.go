@@ -39,6 +39,13 @@ func NewFromConfigFile(file string, client bool) Mgollective {
 		glog.Fatalf("No encoder called %s", "json")
 	}
 
+	securityprovider := mgo.GetConfig("securityprovider", "null")
+	if factory, exists := securityProviderRegistry[securityprovider]; exists {
+		mgo.SecurityProvider = factory(&mgo)
+	} else {
+		glog.Fatalf("No securityprovider called %s", securityprovider)
+	}
+
 	mgo.Connector.Connect()
 	mgo.Connector.Subscribe()
 
@@ -123,8 +130,19 @@ func (m Mgollective) RpcCommand(agent, command string, params map[string]string,
 	req := map[string]string{"foo": "bar"}
 
 	msg := WireMessage{
-		Headers: map[string]string{"foo": "bar"},
-		Body:    m.Encoder.Encode(req),
+		Headers: map[string]string{
+			"protocol_version": "2",
+			"encoding":         m.Encoder.Name(),
+			"accepts_encoding": AcceptedEncodings(),
+			"requestid":        "blarb",
+		},
+		Body: m.Encoder.Encode(req),
+	}
+
+	signature := m.SecurityProvider.Sign(msg.Body)
+	glog.Info("signed %v", signature)
+	for k, v := range signature {
+		msg.Headers[k] = v
 	}
 
 	destination := []string{"foo"}

@@ -144,6 +144,10 @@ func (m Mgollective) Discover(callback func(Message)) {
 	}
 }
 
+func (m Mgollective) RpcCommand(agent, command string, params map[string]string, callback func(ResponseMessage)) {
+
+}
+
 func init() {
 	DeclareConfig("main_collective")
 	DeclareConfig("securityprovider")

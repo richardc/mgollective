@@ -11,8 +11,9 @@ import (
 )
 
 type ActivemqConnector struct {
-	app    *mgollective.Mgollective
-	client *stompngo.Connection
+	app           *mgollective.Mgollective
+	client        *stompngo.Connection
+	internal_chan chan mgollective.WireMessage
 }
 
 func (a *ActivemqConnector) Connect() {
@@ -85,10 +86,25 @@ func (c *ActivemqConnector) Subscribe() {
 	go c.recieve(channel)
 }
 
+// This recieves from a channel of stompnogo.MessageData, wraps it in a
+// mgollective.WireMessage and passes it on to the internal channel
+// that we recieve on
 func (c *ActivemqConnector) recieve(channel <-chan stompngo.MessageData) {
 	for {
-		message := <-channel
-		glog.Infof("Recieved %+v", message)
+		messagedata := <-channel
+		glog.Infof("Recieved %+v", messagedata)
+		headers := make(map[string]string)
+		for i, key := range messagedata.Message.Headers {
+			if i%2 == 0 {
+				headers[key] = messagedata.Message.Headers.Value(key)
+			}
+		}
+		wire := mgollective.WireMessage{
+			Headers: headers,
+			Body:    messagedata.Message.Body,
+		}
+
+		c.internal_chan <- wire
 	}
 }
 
@@ -129,14 +145,19 @@ func (c *ActivemqConnector) Publish(queue string, destinations []string, msg mgo
 	}
 }
 
-func (a *ActivemqConnector) RecieveLoop(parsed chan mgollective.WireMessage) {
+func (c *ActivemqConnector) RecieveLoop(parsed chan mgollective.WireMessage) {
 	glog.Info("entering recieve loop")
-
+	for {
+		message := <-c.internal_chan
+		glog.Info("recieved %v", message)
+		parsed <- message
+	}
 }
 
 func makeActivemqConnector(app *mgollective.Mgollective) mgollective.Connector {
 	return &ActivemqConnector{
-		app: app,
+		app:           app,
+		internal_chan: make(chan mgollective.WireMessage),
 	}
 }
 

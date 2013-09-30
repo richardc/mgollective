@@ -1,6 +1,7 @@
 package mgollective
 
 import (
+	"flag"
 	"github.com/maruel/subcommands"
 	"os"
 )
@@ -8,7 +9,7 @@ import (
 var commands []*subcommands.Command
 
 func RunApplication() {
-	//defer FlushLog()
+	flag.Set("logtostderr", "true")
 	mgollective := &subcommands.DefaultApplication{
 		Name:     "mgo",
 		Title:    "mgollective",

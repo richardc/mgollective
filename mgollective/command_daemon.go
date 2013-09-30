@@ -1,6 +1,7 @@
 package mgollective
 
 import (
+	"github.com/golang/glog"
 	"github.com/maruel/subcommands"
 )
 
@@ -22,11 +23,11 @@ func (d *DaemonCommand) Run(a subcommands.Application, args []string) int {
 	go mgo.Connector.Loop(ch)
 	for {
 		message := <-ch
-		mgo.Debugf("Recieved %+v", message)
+		glog.Infof("Recieved %+v", message)
 		if agent, exists := agentRegistry[message.Body.Agent]; exists {
 			agent(&mgo).Respond(message, mgo.Connector)
 		} else {
-			mgo.Debugf("No agent '%s'", message.Body.Agent)
+			glog.Infof("No agent '%s'", message.Body.Agent)
 		}
 	}
 	return 0

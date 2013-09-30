@@ -3,8 +3,7 @@ package mgollective
 // The application context
 
 import (
-	"fmt"
-	"github.com/cihub/seelog"
+	"github.com/golang/glog"
 	"time"
 )
 
@@ -12,7 +11,6 @@ type Mgollective struct {
 	Connector Connector
 	client    bool
 	config    map[string]string
-	logger    seelog.LoggerInterface
 }
 
 func NewClient() Mgollective {
@@ -21,7 +19,6 @@ func NewClient() Mgollective {
 
 func NewFromConfigFile(file string, client bool) Mgollective {
 	mgo := Mgollective{
-		logger: seelog.Disabled,
 		client: client,
 		config: ParseConfig(file),
 	}
@@ -31,7 +28,7 @@ func NewFromConfigFile(file string, client bool) Mgollective {
 	if factory, exists := connectorRegistry[connectorname]; exists {
 		mgo.Connector = factory(&mgo)
 	} else {
-		fmt.Printf("No connector called %s", connectorname)
+		glog.Errorf("No connector called %s", connectorname)
 		panic("panic")
 	}
 
@@ -55,39 +52,6 @@ func (m Mgollective) GetConfig(name, def string) string {
 }
 func (m Mgollective) IsClient() bool {
 	return m.client
-}
-
-// Explicit delegation over to seelog or whatever
-func (m Mgollective) Error(args ...interface{}) {
-	m.logger.Error(args)
-}
-
-func (m Mgollective) Errorf(fmt string, args ...interface{}) {
-	m.logger.Errorf(fmt, args)
-}
-
-func (m Mgollective) Info(args ...interface{}) {
-	m.logger.Info(args)
-}
-
-func (m Mgollective) Infof(fmt string, args ...interface{}) {
-	m.logger.Infof(fmt, args)
-}
-
-func (m Mgollective) Debug(args ...interface{}) {
-	m.logger.Debug(args)
-}
-
-func (m Mgollective) Debugf(fmt string, args ...interface{}) {
-	m.logger.Debugf(fmt, args)
-}
-
-func (m Mgollective) Trace(args ...interface{}) {
-	m.logger.Trace(args)
-}
-
-func (m Mgollective) Tracef(fmt string, args ...interface{}) {
-	m.logger.Tracef(fmt, args)
 }
 
 func (m Mgollective) Collectives() []string {
@@ -145,6 +109,7 @@ func (m Mgollective) Discover(callback func(Message)) {
 }
 
 func (m Mgollective) RpcCommand(agent, command string, params map[string]string, callback func(ResponseMessage)) {
+	glog.Info("sending RpcCommand")
 	responses := make(chan ResponseMessage)
 
 	for {
@@ -152,7 +117,7 @@ func (m Mgollective) RpcCommand(agent, command string, params map[string]string,
 		case message := <-responses:
 			callback(message)
 		case <-time.After(10 * time.Second):
-			m.Info("timing out")
+			glog.Info("timing out")
 			return
 		}
 	}

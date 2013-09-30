@@ -2,7 +2,7 @@ package mgollective
 
 import (
 	"bufio"
-	"log"
+	"github.com/golang/glog"
 	"os"
 	"strings"
 )
@@ -18,7 +18,7 @@ func ParseConfig(file string) map[string]string {
 
 	fh, err := os.Open(file)
 	if err != nil {
-		log.Fatal(err)
+		glog.Fatal(err)
 	}
 	scanner := bufio.NewScanner(fh)
 	for scanner.Scan() {
@@ -33,13 +33,13 @@ func ParseConfig(file string) map[string]string {
 		} else {
 			// XXX Wuss out on rejecting for now
 			//	log.Fataln("unexpected config key: '" + key + "'")
-			log.Println("unexpected config key: '" + key + "'")
+			glog.Info("unexpected config key: '" + key + "'")
 			configValues[key] = value
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+		glog.Fatal(err)
 	}
 
 	return configValues

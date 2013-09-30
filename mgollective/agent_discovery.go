@@ -1,6 +1,7 @@
 package mgollective
 
 import (
+	"github.com/golang/glog"
 	"time"
 )
 
@@ -13,9 +14,9 @@ func (a *DiscoveryAgent) matches(msg Message) bool {
 }
 
 func (agent *DiscoveryAgent) Respond(msg Message, connector Connector) {
-	agent.app.Infof("Discover agent handling %+v", msg)
+	glog.Infof("Discover agent handling %+v", msg)
 	if !agent.matches(msg) {
-		agent.app.Debugf("Not for us")
+		glog.Infof("Not for us")
 		return
 	}
 	var body string

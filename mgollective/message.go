@@ -19,17 +19,26 @@ type WireMessage struct {
 	Destination []string
 }
 
-type Filter struct {
-	Key     string `json:"key"`
+type FactFilter struct {
+	Name    string `json:"name"`
+	Operand string `json:"operand"`
+	Value   string `json:"value"`
+}
+
+type IdentityFilter struct {
+	Operand string `json:"operand"`
+	Value   string `json:"value"`
+}
+
+type ClassFilter struct {
 	Operand string `json:"operand"`
 	Value   string `json:"value"`
 }
 
 type RequestFilters struct {
-	Identity []Filter `json:"identity"`
-	Agent    []Filter `json:"agent"`
-	Compound []Filter `json:"compound"`
-	Cf_class []Filter `json:"cf_class"`
+	Facts    []FactFilter     `json:"facts,omitempty"`
+	Identity []IdentityFilter `json:"identity,omitempty"`
+	Cf_class []ClassFilter    `json:"cf_class,omitempty"`
 }
 
 type RequestBody struct {
@@ -39,14 +48,14 @@ type RequestBody struct {
 }
 
 type RequestMessage struct {
-	Headers map[string]string `json:"headers"`
-	Filters RequestFilters    `json:"filters"`
+	Headers map[string]string `json:"-"`
+	Filters RequestFilters    `json:"filters,omitempty"`
 	Body    RequestBody       `json:"body"`
 }
 
 type ResponseBody map[string]string
 
 type ResponseMessage struct {
-	Headers map[string]string `json:"headers"`
+	Headers map[string]string `json:"-"`
 	Body    ResponseBody      `json:"body"`
 }

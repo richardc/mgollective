@@ -1,24 +1,27 @@
 package mgollective
 
 import (
+	"code.google.com/p/go-commander"
 	"flag"
-	"github.com/maruel/subcommands"
+	"github.com/golang/glog"
 	"os"
 )
 
-var commands []*subcommands.Command
+var commands []*commander.Command
 
 func RunApplication() {
 	flag.Set("logtostderr", "true")
 	flag.Set("stderrthreshold", "0")
-	mgollective := &subcommands.DefaultApplication{
+	mgollective := &commander.Commander{
 		Name:     "mgo",
-		Title:    "mgollective",
-		Commands: append(commands, subcommands.CmdHelp),
+		Commands: commands,
 	}
-	subcommands.Run(mgollective, os.Args[1:])
+	err := mgollective.Run(os.Args[1:])
+	if err != nil {
+		glog.Fatal(err)
+	}
 }
 
-func RegisterCommand(command *subcommands.Command) {
+func RegisterCommand(command *commander.Command) {
 	commands = append(commands, command)
 }

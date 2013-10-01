@@ -1,22 +1,11 @@
 package mgollective
 
 import (
+	"code.google.com/p/go-commander"
 	"github.com/golang/glog"
-	"github.com/maruel/subcommands"
 )
 
-type DaemonCommand struct {
-	subcommands.CommandRunBase
-}
-
-func init() {
-	RegisterCommand(&subcommands.Command{
-		UsageLine:  "daemon",
-		CommandRun: func() subcommands.CommandRun { return &DaemonCommand{} },
-	})
-}
-
-func (c *DaemonCommand) Run(a subcommands.Application, args []string) int {
+func runDaemonCommand(cmd *commander.Command, args []string) {
 	mgo := NewFromConfigFile("server.cfg", false)
 
 	ch := make(chan WireMessage)
@@ -46,5 +35,11 @@ func (c *DaemonCommand) Run(a subcommands.Application, args []string) int {
 		}
 
 	}
-	return 0
+}
+
+func init() {
+	RegisterCommand(&commander.Command{
+		UsageLine: "daemon",
+		Run:       runDaemonCommand,
+	})
 }

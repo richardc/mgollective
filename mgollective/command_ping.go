@@ -1,23 +1,12 @@
 package mgollective
 
 import (
+	"code.google.com/p/go-commander"
 	"fmt"
-	"github.com/maruel/subcommands"
 	"time"
 )
 
-type PingCommand struct {
-	subcommands.CommandRunBase
-}
-
-func init() {
-	RegisterCommand(&subcommands.Command{
-		UsageLine:  "ping",
-		CommandRun: func() subcommands.CommandRun { return &PingCommand{} },
-	})
-}
-
-func (*PingCommand) Run(a subcommands.Application, args []string) int {
+func runPingCommand(cmd *commander.Command, args []string) {
 	start := time.Now()
 	mgo := NewClient()
 
@@ -31,7 +20,7 @@ func (*PingCommand) Run(a subcommands.Application, args []string) int {
 
 	if len(pings) == 0 {
 		fmt.Println("No responses.")
-		return 1
+		return
 	}
 
 	var min, max, sum time.Duration
@@ -51,6 +40,11 @@ func (*PingCommand) Run(a subcommands.Application, args []string) int {
 	fmt.Println("--- ping statistics ---")
 	fmt.Printf("%d replies max: %s min: %s avg: %s\n",
 		len(pings), max.String(), min.String(), mean.String())
+}
 
-	return 0
+func init() {
+	RegisterCommand(&commander.Command{
+		UsageLine: "ping",
+		Run:       runPingCommand,
+	})
 }

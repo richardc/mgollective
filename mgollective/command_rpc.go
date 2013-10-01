@@ -1,22 +1,11 @@
 package mgollective
 
 import (
+	"code.google.com/p/go-commander"
 	"fmt"
-	"github.com/maruel/subcommands"
 )
 
-type RpcCommand struct {
-	subcommands.CommandRunBase
-}
-
-func init() {
-	RegisterCommand(&subcommands.Command{
-		UsageLine:  "rpc",
-		CommandRun: func() subcommands.CommandRun { return &RpcCommand{} },
-	})
-}
-
-func (*RpcCommand) Run(a subcommands.Application, args []string) int {
+func runRpcCommand(cmd *commander.Command, args []string) {
 	mgo := NewClient()
 
 	request := RequestMessage{
@@ -33,6 +22,11 @@ func (*RpcCommand) Run(a subcommands.Application, args []string) int {
 	mgo.RpcCommand(request, discovered_nodes, func(message ResponseMessage) {
 		fmt.Printf("%-40s %s\n", message.Headers["mc_identity"], message.Body["timestamp"])
 	})
+}
 
-	return 0
+func init() {
+	RegisterCommand(&commander.Command{
+		UsageLine: "rpc",
+		Run:       runRpcCommand,
+	})
 }

@@ -17,7 +17,7 @@ func runDaemonCommand(cmd *commander.Command, args []string) {
 			request := mgo.decodeRequest(message)
 			agentname := request.Body.Agent
 			if agent, exists := agentRegistry[agentname]; exists {
-				response := agent(&mgo).Respond(request)
+				response := agent.Respond(request)
 				if response == nil {
 					glog.Infof("No response from agent %s", agentname)
 				} else {

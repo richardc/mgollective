@@ -49,7 +49,7 @@ func runRpcCommand(cmd *commander.Command, args []string) {
 				"agent":  args[0],
 				"action": args[1],
 				"sender": message.Headers["mc_identity"],
-				"body":   message.Body,
+				"data":   message.Body,
 			}
 
 			json_data = append(json_data, record)

@@ -11,6 +11,9 @@ type PskSecurityProvider struct {
 	psk string
 }
 
+// The psk provider md5 hashes a concatenation of the psk and the message body
+// and returns the lowercased hex string for that
+
 func (s PskSecurityProvider) hash(message []byte) string {
 	hash := md5.New()
 	io.WriteString(hash, s.psk)

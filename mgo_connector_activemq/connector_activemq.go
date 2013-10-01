@@ -87,6 +87,7 @@ func (c *ActivemqConnector) Subscribe() {
 
 	sub := stompngo.Headers{
 		"destination", queue,
+		"id", stompngo.Uuid(),
 	}
 	if !c.app.IsClient() {
 		sub = sub.Add("selector", fmt.Sprintf("mc_identity = '%s'", c.app.Identity()))

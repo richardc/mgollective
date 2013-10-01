@@ -6,7 +6,7 @@ import (
 
 type Action struct {
 	Name string
-	Run  func(RequestMessage) *ResponseBody
+	Run  func(Mgollective, RequestMessage) *ResponseBody
 }
 
 type Agent struct {
@@ -19,10 +19,10 @@ func RegisterAgent(name string, agent Agent) {
 	agentRegistry[name] = agent
 }
 
-func (a *Agent) Respond(request RequestMessage) *ResponseMessage {
+func (a *Agent) Respond(app Mgollective, request RequestMessage) *ResponseMessage {
 	for _, action := range a.Actions {
 		if action.Name == request.Body.Action {
-			body := action.Run(request)
+			body := action.Run(app, request)
 			if body != nil {
 				return &ResponseMessage{Body: *body}
 			} else {

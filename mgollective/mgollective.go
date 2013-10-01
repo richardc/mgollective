@@ -11,6 +11,7 @@ type Mgollective struct {
 	Connector        Connector
 	Encoder          Encoder
 	SecurityProvider SecurityProvider
+	Factsource       Factsource
 	client           bool
 	config           map[string]string
 }

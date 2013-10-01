@@ -17,7 +17,11 @@ func runRpcCommand(cmd *commander.Command, args []string) {
 	params := make(map[string]string)
 	for _, arg := range args[2:] {
 		value := strings.SplitN(arg, "=", 2)
-		params[value[0]] = value[1]
+		if len(value) > 1 {
+			params[value[0]] = value[1]
+		} else {
+			params[arg] = ""
+		}
 	}
 
 	request := RequestMessage{

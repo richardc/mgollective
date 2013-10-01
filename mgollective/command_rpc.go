@@ -32,7 +32,7 @@ func runRpcCommand(cmd *commander.Command, args []string) {
 
 	defer mgo.Shutdown()
 	mgo.RpcCommand(request, discovered_nodes, func(message ResponseMessage) {
-		fmt.Printf("%-40s %s\n", message.Headers["mc_identity"], message.Body["timestamp"])
+		fmt.Printf("%-40s %v\n", message.Headers["mc_identity"], message.Body)
 	})
 }
 

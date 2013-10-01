@@ -16,7 +16,7 @@ type Mgollective struct {
 }
 
 func NewClient() Mgollective {
-	return NewFromConfigFile("client.cfg", true)
+	return NewFromConfigFile(client_config_file, true)
 }
 
 func NewFromConfigFile(file string, client bool) Mgollective {

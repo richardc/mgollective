@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+/// This is really a core agent, but putting it here proves the api is divorced
+
 func pingAction(mgollective.Mgollective, mgollective.RequestMessage) *mgollective.ResponseBody {
 	return &mgollective.ResponseBody{
 		"pong": fmt.Sprintf("%d", time.Now().Unix()),

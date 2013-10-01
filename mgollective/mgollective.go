@@ -130,6 +130,7 @@ func (m Mgollective) encodeResponse(message ResponseMessage) WireMessage {
 func (m Mgollective) decodeResponse(message WireMessage) ResponseMessage {
 	/// XXX select encoder
 	msg := m.Encoder.DecodeResponse(message.Body)
+	msg.Headers = message.Headers
 	glog.Infof("Decoded to %v", msg)
 	return msg
 }
@@ -169,23 +170,24 @@ func (m Mgollective) verifyMessage(message WireMessage) bool {
 
 func (m Mgollective) RpcCommand(request RequestMessage, discovered_nodes []string, callback func(ResponseMessage)) {
 	glog.Info("sending RpcCommand %v", request)
-	responses := make(chan ResponseMessage)
+	responses := make(chan WireMessage)
 	msg := m.encodeRequest(request)
 	m.signMessage(&msg)
 
 	msg.Destination = discovered_nodes
 
 	go m.Connector.PublishRequest(msg)
-	//go m.Connector.RecieveLoop(responses)
+	go m.Connector.RecieveLoop(responses)
 
 	response_count := 0
 	for {
 		select {
 		case message := <-responses:
-			callback(message)
+			msg := m.decodeResponse(message)
+			callback(msg)
 			response_count++
 			if response_count >= len(discovered_nodes) {
-				glog.Info("got responses, quitting")
+				glog.Info("got all responses, quitting")
 				return
 			}
 		case <-time.After(10 * time.Second):

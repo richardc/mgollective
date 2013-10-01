@@ -33,7 +33,10 @@ func (c *DaemonCommand) Run(a subcommands.Application, args []string) int {
 					glog.Infof("No response from agent %s", agentname)
 				} else {
 					glog.Infof("Sending response %v", response)
-					/// XXX actually send a response
+					wire_response := mgo.encodeResponse(*response)
+					mgo.signMessage(&wire_response)
+					wire_response.Target = request.Headers["reply-to"]
+					go mgo.Connector.PublishResponse(wire_response)
 				}
 			} else {
 				glog.Infof("No agent '%s'", agentname)

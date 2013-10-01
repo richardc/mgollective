@@ -1,8 +1,22 @@
 package mgollective
 
+type MessageType int
+
+const (
+	_                   = iota
+	Request MessageType = 1
+	Response
+)
+
+type WireMessageHeaders map[string]string
+
 type WireMessage struct {
-	Headers map[string]string
-	Body    []byte
+	Headers     WireMessageHeaders
+	Body        []byte
+	Type        MessageType
+	Identity    string
+	Target      string
+	Destination []string
 }
 
 type Filter struct {
@@ -25,11 +39,14 @@ type RequestBody struct {
 }
 
 type RequestMessage struct {
+	Headers map[string]string
 	Filters RequestFilters
 	Body    RequestBody
 }
 
+type ResponseBody map[string]string
+
 type ResponseMessage struct {
 	Headers map[string]string
-	Body    map[string]string
+	Body    ResponseBody
 }

@@ -5,6 +5,8 @@ type Encoder interface {
 	Order() int
 	EncodeRequest(RequestMessage) []byte
 	DecodeRequest([]byte) RequestMessage
+	EncodeResponse(ResponseMessage) []byte
+	DecodeResponse([]byte) ResponseMessage
 }
 
 type EncoderFactory func(*Mgollective) Encoder

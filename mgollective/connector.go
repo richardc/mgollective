@@ -5,7 +5,9 @@ type Connector interface {
 	Subscribe()
 	Unsubscribe()
 	Disconnect()
-	Publish(queue string, destinations []string, message WireMessage)
+	PublishRequest(message WireMessage)
+	PublishResponse(message WireMessage)
+
 	RecieveLoop(chan WireMessage)
 }
 

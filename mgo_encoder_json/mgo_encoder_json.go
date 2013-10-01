@@ -27,6 +27,17 @@ func (e JsonEncoder) DecodeRequest(bytes []byte) mgollective.RequestMessage {
 	return *message
 }
 
+func (e JsonEncoder) EncodeResponse(message mgollective.ResponseMessage) []byte {
+	bytes, _ := json.Marshal(message)
+	return bytes
+}
+
+func (e JsonEncoder) DecodeResponse(bytes []byte) mgollective.ResponseMessage {
+	message := &mgollective.ResponseMessage{}
+	json.Unmarshal(bytes, message)
+	return *message
+}
+
 func makeJsonEncoder(app *mgollective.Mgollective) mgollective.Encoder {
 	return &JsonEncoder{}
 }

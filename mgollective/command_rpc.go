@@ -27,7 +27,7 @@ func (*RpcCommand) Run(a subcommands.Application, args []string) int {
 		},
 	}
 
-	discovered_nodes := []string{"foo"}
+	discovered_nodes := []string{mgo.Identity()}
 
 	defer mgo.Shutdown()
 	mgo.RpcCommand(request, discovered_nodes, func(message ResponseMessage) {

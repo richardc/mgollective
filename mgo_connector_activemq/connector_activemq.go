@@ -88,6 +88,9 @@ func (c *ActivemqConnector) Subscribe() {
 	sub := stompngo.Headers{
 		"destination", queue,
 	}
+	if !c.app.IsClient() {
+		sub = sub.Add("selector", fmt.Sprintf("mc_identity = '%s'", c.app.Identity()))
+	}
 	glog.Info("subscribing with headers %v", sub)
 	channel, err := c.client.Subscribe(sub)
 	if err != nil {
@@ -101,13 +104,17 @@ func (c *ActivemqConnector) Subscribe() {
 // that we recieve on
 func (c *ActivemqConnector) recieve(channel <-chan stompngo.MessageData) {
 	for messagedata := range channel {
-		glog.Infof("STOMP recieved %+v", messagedata)
+		glog.Infof("STOMP recieved Command %s", messagedata.Message.Command)
+		glog.Infof("STOMP recieved Headers %#v", messagedata.Message.Headers)
+		glog.Infof("STOMP recieved Body %s", messagedata.Message.BodyString())
+
 		headers := make(map[string]string)
 		for i, key := range messagedata.Message.Headers {
 			if i%2 == 0 {
 				headers[key] = messagedata.Message.Headers.Value(key)
 			}
 		}
+
 		wire := mgollective.WireMessage{
 			Headers: headers,
 			Body:    messagedata.Message.Body,
@@ -136,24 +143,42 @@ func (c *ActivemqConnector) Unsubscribe() {
 	}
 }
 
-func (c *ActivemqConnector) Publish(queue string, destinations []string, msg mgollective.WireMessage) {
-	for _, destination := range destinations {
-		// convert down to milliseconds and add 60,000
-		expires := time.Now().UnixNano()/1000000 + 60000
-		headers := stompngo.Headers{
-			"destination", queue,
-			"mc_identity", destination,
-			"expires", fmt.Sprintf("%d", expires),
-		}
-		for k, v := range msg.Headers {
-			headers = headers.Add(k, v)
-		}
-		glog.Infof("publishing message on %s with headers %v", queue, headers)
-		err := c.client.Send(headers, string(msg.Body))
-		if err != nil {
-			glog.Fatalln(err)
-		}
+func (c ActivemqConnector) publish(queue string, message mgollective.WireMessage, extra_headers map[string]string) {
+	// convert down to milliseconds and add 60,000
+	expires := time.Now().UnixNano()/1000000 + 60000
+	headers := stompngo.Headers{
+		"destination", queue,
+		"expires", fmt.Sprintf("%d", expires),
 	}
+	for k, v := range message.Headers {
+		headers = headers.Add(k, v)
+	}
+	for k, v := range extra_headers {
+		headers = headers.Add(k, v)
+	}
+	glog.Infof("publishing with headers %v", headers)
+	err := c.client.Send(headers, string(message.Body))
+	if err != nil {
+		glog.Fatalln(err)
+	}
+}
+
+func (c *ActivemqConnector) PublishRequest(msg mgollective.WireMessage) {
+	for _, destination := range msg.Destination {
+		extra := map[string]string{
+			"mc_identity": destination,
+			"reply-to":    fmt.Sprintf("/queue/%s.reply.%s_%d", c.app.Collective(), c.app.Senderid(), os.Getpid()),
+		}
+		c.publish("/queue/mcollective.nodes", msg, extra)
+	}
+
+}
+
+func (c *ActivemqConnector) PublishResponse(msg mgollective.WireMessage) {
+	extra := map[string]string{
+		"mc_identity": c.app.Identity(),
+	}
+	c.publish(msg.Target, msg, extra)
 }
 
 func (c *ActivemqConnector) RecieveLoop(parsed chan mgollective.WireMessage) {

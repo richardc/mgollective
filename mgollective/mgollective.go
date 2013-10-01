@@ -81,7 +81,7 @@ func (m Mgollective) Classes() []string {
 }
 
 func (m Mgollective) Identity() string {
-	return "mcollective::agent::pies"
+	return "foo.example.com"
 }
 
 func (m Mgollective) Callerid() string {
@@ -115,9 +115,29 @@ func (m Mgollective) Discover(callback func(ResponseMessage)) {
 	}
 }
 
+func (m Mgollective) encodeResponse(message ResponseMessage) WireMessage {
+	msg := WireMessage{
+		Type: Response,
+		Headers: WireMessageHeaders{
+			"protocol_version": "2",
+			"encoding":         m.Encoder.Name(),
+		},
+		Body: m.Encoder.EncodeResponse(message),
+	}
+	return msg
+}
+
+func (m Mgollective) decodeResponse(message WireMessage) ResponseMessage {
+	/// XXX select encoder
+	msg := m.Encoder.DecodeResponse(message.Body)
+	glog.Infof("Decoded to %v", msg)
+	return msg
+}
+
 func (m Mgollective) encodeRequest(message RequestMessage) WireMessage {
 	msg := WireMessage{
-		Headers: map[string]string{
+		Type: Request,
+		Headers: WireMessageHeaders{
 			"protocol_version": "2",
 			"encoding":         m.Encoder.Name(),
 			"accepts_encoding": m.Encoder.Name(), // XXX should be lookup
@@ -131,6 +151,7 @@ func (m Mgollective) encodeRequest(message RequestMessage) WireMessage {
 func (m Mgollective) decodeRequest(message WireMessage) RequestMessage {
 	/// XXX select encoder
 	msg := m.Encoder.DecodeRequest(message.Body)
+	msg.Headers = message.Headers
 	glog.Infof("Decoded to %v", msg)
 	return msg
 }
@@ -150,10 +171,12 @@ func (m Mgollective) RpcCommand(request RequestMessage, discovered_nodes []strin
 	glog.Info("sending RpcCommand %v", request)
 	responses := make(chan ResponseMessage)
 	msg := m.encodeRequest(request)
-
 	m.signMessage(&msg)
 
-	go m.Connector.Publish("/queue/mcollective.nodes", discovered_nodes, msg)
+	msg.Destination = discovered_nodes
+
+	go m.Connector.PublishRequest(msg)
+	//go m.Connector.RecieveLoop(responses)
 
 	response_count := 0
 	for {

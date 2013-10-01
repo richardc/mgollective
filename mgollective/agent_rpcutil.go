@@ -8,28 +8,17 @@ type RpcUtilAgent struct {
 	app *Mgollective
 }
 
-func (a RpcUtilAgent) matches(msg RequestMessage) bool {
-	return true
-}
-
 func (agent *RpcUtilAgent) Respond(msg RequestMessage) *ResponseMessage {
-	glog.Infof("Discover agent handling %+v", msg)
-	if !agent.matches(msg) {
-		glog.Infof("Not for us")
+	glog.Infof("RpcUtil agent handling %+v", msg)
+	if msg.Body.Action == "ping" {
+		return &ResponseMessage{
+			Body: ResponseBody{
+				"message": "pong",
+			},
+		}
+	} else {
 		return nil
 	}
-	var body string
-	if msg.Body.Action == "ping" {
-		body = "pong"
-	} else {
-		body = "Unknown Request: " + msg.Body.Action
-	}
-
-	response := ResponseMessage{
-		Body: map[string]string{"message": body},
-	}
-
-	return &response
 }
 
 func makeRpcUtilAgent(m *Mgollective) Agent {

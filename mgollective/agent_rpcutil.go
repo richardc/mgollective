@@ -1,7 +1,9 @@
 package mgollective
 
 import (
+	"fmt"
 	"github.com/golang/glog"
+	"time"
 )
 
 type RpcUtilAgent struct {
@@ -13,7 +15,7 @@ func (agent *RpcUtilAgent) Respond(msg RequestMessage) *ResponseMessage {
 	if msg.Body.Action == "ping" {
 		return &ResponseMessage{
 			Body: ResponseBody{
-				"message": "pong",
+				"pong": fmt.Sprintf("%d", time.Now().Unix()),
 			},
 		}
 	} else {

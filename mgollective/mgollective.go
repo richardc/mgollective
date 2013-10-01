@@ -183,12 +183,16 @@ func (m Mgollective) RpcCommand(request RequestMessage, discovered_nodes []strin
 	for {
 		select {
 		case message := <-responses:
-			msg := m.decodeResponse(message)
-			callback(msg)
-			response_count++
-			if response_count >= len(discovered_nodes) {
-				glog.Info("got all responses, quitting")
-				return
+			if m.verifyMessage(message) {
+				msg := m.decodeResponse(message)
+				callback(msg)
+				response_count++
+				if response_count >= len(discovered_nodes) {
+					glog.Info("got all responses, quitting")
+					return
+				}
+			} else {
+				glog.Error("Message didn't validate")
 			}
 		case <-time.After(10 * time.Second):
 			glog.Info("timing out")

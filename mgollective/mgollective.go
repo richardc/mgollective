@@ -16,10 +16,14 @@ type Mgollective struct {
 }
 
 func NewClient() Mgollective {
-	return NewFromConfigFile(client_config_file, true)
+	return newFromConfigFile(client_config_file, true)
 }
 
-func NewFromConfigFile(file string, client bool) Mgollective {
+func NewServer() Mgollective {
+	return newFromConfigFile(server_config_file, false)
+}
+
+func newFromConfigFile(file string, client bool) Mgollective {
 	mgo := Mgollective{
 		client: client,
 		config: ParseConfig(file),

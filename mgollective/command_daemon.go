@@ -6,7 +6,7 @@ import (
 )
 
 func runDaemonCommand(cmd *commander.Command, args []string) {
-	mgo := NewFromConfigFile("server.cfg", false)
+	mgo := NewServer()
 
 	ch := make(chan WireMessage)
 	go mgo.Connector.RecieveLoop(ch)

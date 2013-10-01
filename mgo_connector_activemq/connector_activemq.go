@@ -78,20 +78,23 @@ func (c *ActivemqConnector) Disconnect() {
 func (c *ActivemqConnector) Subscribe() {
 	glog.Info("subscribing to channels")
 
-	var queue string
+	sub := stompngo.Headers{"id", stompngo.Uuid()}
+
 	if c.app.IsClient() {
-		queue = fmt.Sprintf("/queue/%s.reply.%s_%d", c.app.Collective(), c.app.Senderid(), os.Getpid())
+		sub = sub.Add(
+			"destination",
+			fmt.Sprintf("/queue/%s.reply.%s_%d",
+				c.app.Collective(),
+				c.app.Senderid(),
+				os.Getpid()),
+		)
 	} else {
-		queue = fmt.Sprintf("/queue/%s.nodes", c.app.Collective())
+		sub = sub.AddHeaders(stompngo.Headers{
+			"destination", fmt.Sprintf("/queue/%s.nodes", c.app.Collective()),
+			"selector", fmt.Sprintf("mc_identity = '%s'", c.app.Identity()),
+		})
 	}
 
-	sub := stompngo.Headers{
-		"destination", queue,
-		"id", stompngo.Uuid(),
-	}
-	if !c.app.IsClient() {
-		sub = sub.Add("selector", fmt.Sprintf("mc_identity = '%s'", c.app.Identity()))
-	}
 	glog.Info("subscribing with headers %v", sub)
 	channel, err := c.client.Subscribe(sub)
 	if err != nil {

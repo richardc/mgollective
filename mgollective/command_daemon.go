@@ -24,7 +24,7 @@ func runDaemonCommand(cmd *commander.Command, args []string) {
 					glog.Infof("Sending response %v", response)
 					wire_response := mgo.encodeResponse(*response)
 					mgo.signMessage(&wire_response)
-					wire_response.Target = request.Headers["reply-to"]
+					wire_response.Target = request.Headers["mc_reply_to"]
 					go mgo.Connector.PublishResponse(wire_response)
 				}
 			} else {

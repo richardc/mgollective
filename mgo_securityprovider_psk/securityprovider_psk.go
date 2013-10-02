@@ -23,12 +23,12 @@ func (s PskSecurityProvider) hash(message []byte) string {
 
 func (p PskSecurityProvider) Sign(message []byte) map[string]string {
 	headers := make(map[string]string)
-	headers["signature"] = p.hash(message)
+	headers["mc_signature"] = p.hash(message)
 	return headers
 }
 
 func (p PskSecurityProvider) Verify(message []byte, headers map[string]string) bool {
-	if headers["signature"] == p.hash(message) {
+	if headers["mc_signature"] == p.hash(message) {
 		return true
 	}
 	return false

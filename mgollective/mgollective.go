@@ -144,10 +144,10 @@ func (m Mgollective) encodeRequest(message RequestMessage) WireMessage {
 	msg := WireMessage{
 		Type: Request,
 		Headers: WireMessageHeaders{
-			"protocol_version": "2",
-			"encoding":         m.Encoder.Name(),
-			"accepts_encoding": m.Encoder.Name(), // XXX should be lookup
-			"requestid":        "blarb",
+			"mc_protocol_version": "2",
+			"mc_encoding":         m.Encoder.Name(),
+			"mc_accepts_encoding": m.Encoder.Name(), // XXX should be lookup
+			"mc_requestid":        "blarb",
 		},
 		Body: m.Encoder.EncodeRequest(message),
 	}

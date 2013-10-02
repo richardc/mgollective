@@ -9,7 +9,7 @@ type NullSecurityProvider struct {
 
 func (p NullSecurityProvider) Sign(message []byte) map[string]string {
 	headers := make(map[string]string)
-	headers["signature"] = "Everything looks fine buddy"
+	headers["mc_signature"] = "Everything looks fine buddy"
 	return headers
 }
 

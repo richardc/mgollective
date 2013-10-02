@@ -171,7 +171,7 @@ func (c *ActivemqConnector) PublishRequest(msg mgollective.WireMessage) {
 	for _, destination := range msg.Destination {
 		extra := map[string]string{
 			"mc_identity": destination,
-			"reply-to":    fmt.Sprintf("/queue/%s.reply.%s_%d", c.app.Collective(), c.app.Senderid(), os.Getpid()),
+			"mc_reply_to": fmt.Sprintf("%s.reply.%s_%d", c.app.Collective(), c.app.Senderid(), os.Getpid()),
 		}
 		c.publish("/queue/mcollective.nodes", msg, extra)
 	}
@@ -182,7 +182,7 @@ func (c *ActivemqConnector) PublishResponse(msg mgollective.WireMessage) {
 	extra := map[string]string{
 		"mc_identity": c.app.Identity(),
 	}
-	c.publish(msg.Target, msg, extra)
+	c.publish(fmt.Sprintf("/queue/%s", msg.Target), msg, extra)
 }
 
 func (c *ActivemqConnector) RecieveLoop(parsed chan mgollective.WireMessage) {
